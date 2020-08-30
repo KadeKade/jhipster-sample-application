@@ -1,0 +1,25 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "task": {
+      "home": {
+        "title": "Tasks",
+        "createLabel": "Стварыць новы Task",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Task",
+        "search": "Знайсці Task",
+        "notFound": "No Tasks found"
+      },
+      "created": "Новы Task створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Task абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Task выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Task {{ id }}?"
+      },
+      "detail": {
+        "title": "Task"
+      },
+      "title": "Title",
+      "description": "Description",
+      "job": "Job"
+    }
+  }
+}

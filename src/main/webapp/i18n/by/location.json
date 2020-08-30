@@ -1,0 +1,27 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "location": {
+      "home": {
+        "title": "Locations",
+        "createLabel": "Стварыць новы Location",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Location",
+        "search": "Знайсці Location",
+        "notFound": "No Locations found"
+      },
+      "created": "Новы Location створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Location абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Location выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Location {{ id }}?"
+      },
+      "detail": {
+        "title": "Location"
+      },
+      "streetAddress": "Street Address",
+      "postalCode": "Postal Code",
+      "city": "City",
+      "stateProvince": "State Province",
+      "country": "Country"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "country": {
+      "home": {
+        "title": "Countries",
+        "createLabel": "Стварыць новы Country",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Country",
+        "search": "Знайсці Country",
+        "notFound": "No Countries found"
+      },
+      "created": "Новы Country створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Country абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Country выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Country {{ id }}?"
+      },
+      "detail": {
+        "title": "Country"
+      },
+      "countryName": "Country Name",
+      "region": "Region"
+    }
+  }
+}
