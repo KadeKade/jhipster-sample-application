@@ -1,0 +1,35 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "employee": {
+      "home": {
+        "title": "Employees",
+        "createLabel": "Стварыць новы Employee",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Employee",
+        "search": "Знайсці Employee",
+        "notFound": "No Employees found"
+      },
+      "created": "Новы Employee створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Employee абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Employee выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Employee {{ id }}?"
+      },
+      "detail": {
+        "title": "Employee"
+      },
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phoneNumber": "Phone Number",
+      "hireDate": "Hire Date",
+      "salary": "Salary",
+      "commissionPct": "Commission Pct",
+      "job": "Job",
+      "manager": "Manager",
+      "department": "Department",
+      "help": {
+        "firstName": "The firstname attribute."
+      }
+    }
+  }
+}
