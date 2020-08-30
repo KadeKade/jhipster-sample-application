@@ -1,0 +1,27 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "job": {
+      "home": {
+        "title": "Jobs",
+        "createLabel": "Стварыць новы Job",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Job",
+        "search": "Знайсці Job",
+        "notFound": "No Jobs found"
+      },
+      "created": "Новы Job створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Job абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Job выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Job {{ id }}?"
+      },
+      "detail": {
+        "title": "Job"
+      },
+      "jobTitle": "Job Title",
+      "minSalary": "Min Salary",
+      "maxSalary": "Max Salary",
+      "task": "Task",
+      "employee": "Employee"
+    }
+  }
+}

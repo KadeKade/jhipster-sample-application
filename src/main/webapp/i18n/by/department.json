@@ -1,0 +1,25 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "department": {
+      "home": {
+        "title": "Departments",
+        "createLabel": "Стварыць новы Department",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Department",
+        "search": "Знайсці Department",
+        "notFound": "No Departments found"
+      },
+      "created": "Новы Department створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Department абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Department выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Department {{ id }}?"
+      },
+      "detail": {
+        "title": "Department"
+      },
+      "departmentName": "Department Name",
+      "location": "Location",
+      "employee": "Employee"
+    }
+  }
+}

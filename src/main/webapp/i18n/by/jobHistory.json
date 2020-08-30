@@ -1,0 +1,28 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "jobHistory": {
+      "home": {
+        "title": "Job Histories",
+        "createLabel": "Стварыць новы Job History",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Job History",
+        "search": "Знайсці Job History",
+        "notFound": "No Job Histories found"
+      },
+      "created": "Новы Job History створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Job History абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Job History выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Job History {{ id }}?"
+      },
+      "detail": {
+        "title": "Job History"
+      },
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "language": "Language",
+      "job": "Job",
+      "department": "Department",
+      "employee": "Employee"
+    }
+  }
+}
