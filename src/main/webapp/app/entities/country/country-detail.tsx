@@ -1,30 +1,37 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Button, Row, Col } from 'reactstrap';
-import { Translate, ICrudGetAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getEntity } from './country.reducer';
-import { ICountry } from 'app/shared/model/country.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface ICountryDetailProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+import { getEntity } from './country.reducer';
 
-export const CountryDetail = (props: ICountryDetailProps) => {
+export const CountryDetail = () => {
+  const dispatch = useAppDispatch();
+
+  const { id } = useParams<'id'>();
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
   }, []);
 
-  const { countryEntity } = props;
+  const countryEntity = useAppSelector(state => state.country.entity);
   return (
     <Row>
       <Col md="8">
-        <h2>
-          <Translate contentKey="jhipsterSampleApplicationApp.country.detail.title">Country</Translate> [<b>{countryEntity.id}</b>]
+        <h2 data-cy="countryDetailsHeading">
+          <Translate contentKey="jhipsterSampleApplicationApp.country.detail.title">Country</Translate>
         </h2>
         <dl className="jh-entity-details">
+          <dt>
+            <span id="id">
+              <Translate contentKey="global.field.id">ID</Translate>
+            </span>
+          </dt>
+          <dd>{countryEntity.id}</dd>
           <dt>
             <span id="countryName">
               <Translate contentKey="jhipsterSampleApplicationApp.country.countryName">Country Name</Translate>
@@ -36,7 +43,7 @@ export const CountryDetail = (props: ICountryDetailProps) => {
           </dt>
           <dd>{countryEntity.region ? countryEntity.region.id : ''}</dd>
         </dl>
-        <Button tag={Link} to="/country" replace color="info">
+        <Button tag={Link} to="/country" replace color="info" data-cy="entityDetailsBackButton">
           <FontAwesomeIcon icon="arrow-left" />{' '}
           <span className="d-none d-md-inline">
             <Translate contentKey="entity.action.back">Back</Translate>
@@ -54,13 +61,4 @@ export const CountryDetail = (props: ICountryDetailProps) => {
   );
 };
 
-const mapStateToProps = ({ country }: IRootState) => ({
-  countryEntity: country.entity,
-});
-
-const mapDispatchToProps = { getEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(CountryDetail);
+export default CountryDetail;

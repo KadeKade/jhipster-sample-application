@@ -1,70 +1,87 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, Label, UncontrolledTooltip } from 'reactstrap';
-import { AvFeedback, AvForm, AvGroup, AvInput, AvField } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudGetAction, ICrudGetAllAction, ICrudPutAction } from 'react-jhipster';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Button, Row, Col, FormText, UncontrolledTooltip } from 'reactstrap';
+import { isNumber, Translate, translate, ValidatedField, ValidatedForm } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IRootState } from 'app/shared/reducers';
+
+import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
+import { mapIdList } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
 import { getEntities as getEmployees } from 'app/entities/employee/employee.reducer';
 import { IDepartment } from 'app/shared/model/department.model';
 import { getEntities as getDepartments } from 'app/entities/department/department.reducer';
-import { getEntity, updateEntity, createEntity, reset } from './employee.reducer';
 import { IEmployee } from 'app/shared/model/employee.model';
-import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
-import { mapIdList } from 'app/shared/util/entity-utils';
+import { getEntity, updateEntity, createEntity, reset } from './employee.reducer';
 
-export interface IEmployeeUpdateProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const EmployeeUpdate = () => {
+  const dispatch = useAppDispatch();
 
-export const EmployeeUpdate = (props: IEmployeeUpdateProps) => {
-  const [managerId, setManagerId] = useState('0');
-  const [departmentId, setDepartmentId] = useState('0');
-  const [isNew, setIsNew] = useState(!props.match.params || !props.match.params.id);
+  const navigate = useNavigate();
 
-  const { employeeEntity, employees, departments, loading, updating } = props;
+  const { id } = useParams<'id'>();
+  const isNew = id === undefined;
+
+  const employees = useAppSelector(state => state.employee.entities);
+  const departments = useAppSelector(state => state.department.entities);
+  const employeeEntity = useAppSelector(state => state.employee.entity);
+  const loading = useAppSelector(state => state.employee.loading);
+  const updating = useAppSelector(state => state.employee.updating);
+  const updateSuccess = useAppSelector(state => state.employee.updateSuccess);
 
   const handleClose = () => {
-    props.history.push('/employee');
+    navigate('/employee');
   };
 
   useEffect(() => {
     if (!isNew) {
-      props.getEntity(props.match.params.id);
+      dispatch(getEntity(id));
     }
 
-    props.getEmployees();
-    props.getDepartments();
+    dispatch(getEmployees({}));
+    dispatch(getDepartments({}));
   }, []);
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       handleClose();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
-  const saveEntity = (event, errors, values) => {
+  const saveEntity = values => {
     values.hireDate = convertDateTimeToServer(values.hireDate);
 
-    if (errors.length === 0) {
-      const entity = {
-        ...employeeEntity,
-        ...values,
-      };
+    const entity = {
+      ...employeeEntity,
+      ...values,
+      manager: employees.find(it => it.id.toString() === values.manager.toString()),
+      department: departments.find(it => it.id.toString() === values.department.toString()),
+    };
 
-      if (isNew) {
-        props.createEntity(entity);
-      } else {
-        props.updateEntity(entity);
-      }
+    if (isNew) {
+      dispatch(createEntity(entity));
+    } else {
+      dispatch(updateEntity(entity));
     }
   };
+
+  const defaultValues = () =>
+    isNew
+      ? {
+          hireDate: displayDefaultDateTime(),
+        }
+      : {
+          ...employeeEntity,
+          hireDate: convertDateTimeFromServer(employeeEntity.hireDate),
+          manager: employeeEntity?.manager?.id,
+          department: employeeEntity?.department?.id,
+        };
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col md="8">
-          <h2 id="jhipsterSampleApplicationApp.employee.home.createOrEditLabel">
+          <h2 id="jhipsterSampleApplicationApp.employee.home.createOrEditLabel" data-cy="EmployeeCreateUpdateHeading">
             <Translate contentKey="jhipsterSampleApplicationApp.employee.home.createOrEditLabel">Create or edit a Employee</Translate>
           </h2>
         </Col>
@@ -74,98 +91,103 @@ export const EmployeeUpdate = (props: IEmployeeUpdateProps) => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <AvForm model={isNew ? {} : employeeEntity} onSubmit={saveEntity}>
+            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew ? (
-                <AvGroup>
-                  <Label for="employee-id">
-                    <Translate contentKey="global.field.id">ID</Translate>
-                  </Label>
-                  <AvInput id="employee-id" type="text" className="form-control" name="id" required readOnly />
-                </AvGroup>
-              ) : null}
-              <AvGroup>
-                <Label id="firstNameLabel" for="employee-firstName">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.firstName">First Name</Translate>
-                </Label>
-                <AvField id="employee-firstName" type="text" name="firstName" />
-                <UncontrolledTooltip target="firstNameLabel">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.help.firstName" />
-                </UncontrolledTooltip>
-              </AvGroup>
-              <AvGroup>
-                <Label id="lastNameLabel" for="employee-lastName">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.lastName">Last Name</Translate>
-                </Label>
-                <AvField id="employee-lastName" type="text" name="lastName" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="emailLabel" for="employee-email">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.email">Email</Translate>
-                </Label>
-                <AvField id="employee-email" type="text" name="email" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="phoneNumberLabel" for="employee-phoneNumber">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.phoneNumber">Phone Number</Translate>
-                </Label>
-                <AvField id="employee-phoneNumber" type="text" name="phoneNumber" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="hireDateLabel" for="employee-hireDate">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.hireDate">Hire Date</Translate>
-                </Label>
-                <AvInput
-                  id="employee-hireDate"
-                  type="datetime-local"
-                  className="form-control"
-                  name="hireDate"
-                  placeholder={'YYYY-MM-DD HH:mm'}
-                  value={isNew ? displayDefaultDateTime() : convertDateTimeFromServer(props.employeeEntity.hireDate)}
+                <ValidatedField
+                  name="id"
+                  required
+                  readOnly
+                  id="employee-id"
+                  label={translate('global.field.id')}
+                  validate={{ required: true }}
                 />
-              </AvGroup>
-              <AvGroup>
-                <Label id="salaryLabel" for="employee-salary">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.salary">Salary</Translate>
-                </Label>
-                <AvField id="employee-salary" type="string" className="form-control" name="salary" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="commissionPctLabel" for="employee-commissionPct">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.commissionPct">Commission Pct</Translate>
-                </Label>
-                <AvField id="employee-commissionPct" type="string" className="form-control" name="commissionPct" />
-              </AvGroup>
-              <AvGroup>
-                <Label for="employee-manager">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.manager">Manager</Translate>
-                </Label>
-                <AvInput id="employee-manager" type="select" className="form-control" name="manager.id">
-                  <option value="" key="0" />
-                  {employees
-                    ? employees.map(otherEntity => (
-                        <option value={otherEntity.id} key={otherEntity.id}>
-                          {otherEntity.id}
-                        </option>
-                      ))
-                    : null}
-                </AvInput>
-              </AvGroup>
-              <AvGroup>
-                <Label for="employee-department">
-                  <Translate contentKey="jhipsterSampleApplicationApp.employee.department">Department</Translate>
-                </Label>
-                <AvInput id="employee-department" type="select" className="form-control" name="department.id">
-                  <option value="" key="0" />
-                  {departments
-                    ? departments.map(otherEntity => (
-                        <option value={otherEntity.id} key={otherEntity.id}>
-                          {otherEntity.id}
-                        </option>
-                      ))
-                    : null}
-                </AvInput>
-              </AvGroup>
-              <Button tag={Link} id="cancel-save" to="/employee" replace color="info">
+              ) : null}
+              <ValidatedField
+                label={translate('jhipsterSampleApplicationApp.employee.firstName')}
+                id="employee-firstName"
+                name="firstName"
+                data-cy="firstName"
+                type="text"
+              />
+              <UncontrolledTooltip target="firstNameLabel">
+                <Translate contentKey="jhipsterSampleApplicationApp.employee.help.firstName" />
+              </UncontrolledTooltip>
+              <ValidatedField
+                label={translate('jhipsterSampleApplicationApp.employee.lastName')}
+                id="employee-lastName"
+                name="lastName"
+                data-cy="lastName"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('jhipsterSampleApplicationApp.employee.email')}
+                id="employee-email"
+                name="email"
+                data-cy="email"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('jhipsterSampleApplicationApp.employee.phoneNumber')}
+                id="employee-phoneNumber"
+                name="phoneNumber"
+                data-cy="phoneNumber"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('jhipsterSampleApplicationApp.employee.hireDate')}
+                id="employee-hireDate"
+                name="hireDate"
+                data-cy="hireDate"
+                type="datetime-local"
+                placeholder="YYYY-MM-DD HH:mm"
+              />
+              <ValidatedField
+                label={translate('jhipsterSampleApplicationApp.employee.salary')}
+                id="employee-salary"
+                name="salary"
+                data-cy="salary"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('jhipsterSampleApplicationApp.employee.commissionPct')}
+                id="employee-commissionPct"
+                name="commissionPct"
+                data-cy="commissionPct"
+                type="text"
+              />
+              <ValidatedField
+                id="employee-manager"
+                name="manager"
+                data-cy="manager"
+                label={translate('jhipsterSampleApplicationApp.employee.manager')}
+                type="select"
+              >
+                <option value="" key="0" />
+                {employees
+                  ? employees.map(otherEntity => (
+                      <option value={otherEntity.id} key={otherEntity.id}>
+                        {otherEntity.id}
+                      </option>
+                    ))
+                  : null}
+              </ValidatedField>
+              <ValidatedField
+                id="employee-department"
+                name="department"
+                data-cy="department"
+                label={translate('jhipsterSampleApplicationApp.employee.department')}
+                type="select"
+              >
+                <option value="" key="0" />
+                {departments
+                  ? departments.map(otherEntity => (
+                      <option value={otherEntity.id} key={otherEntity.id}>
+                        {otherEntity.id}
+                      </option>
+                    ))
+                  : null}
+              </ValidatedField>
+              <Button tag={Link} id="cancel-save" data-cy="entityCreateCancelButton" to="/employee" replace color="info">
                 <FontAwesomeIcon icon="arrow-left" />
                 &nbsp;
                 <span className="d-none d-md-inline">
@@ -173,12 +195,12 @@ export const EmployeeUpdate = (props: IEmployeeUpdateProps) => {
                 </span>
               </Button>
               &nbsp;
-              <Button color="primary" id="save-entity" type="submit" disabled={updating}>
+              <Button color="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
                 <FontAwesomeIcon icon="save" />
                 &nbsp;
                 <Translate contentKey="entity.action.save">Save</Translate>
               </Button>
-            </AvForm>
+            </ValidatedForm>
           )}
         </Col>
       </Row>
@@ -186,25 +208,4 @@ export const EmployeeUpdate = (props: IEmployeeUpdateProps) => {
   );
 };
 
-const mapStateToProps = (storeState: IRootState) => ({
-  employees: storeState.employee.entities,
-  departments: storeState.department.entities,
-  employeeEntity: storeState.employee.entity,
-  loading: storeState.employee.loading,
-  updating: storeState.employee.updating,
-  updateSuccess: storeState.employee.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getEmployees,
-  getDepartments,
-  getEntity,
-  updateEntity,
-  createEntity,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(EmployeeUpdate);
+export default EmployeeUpdate;

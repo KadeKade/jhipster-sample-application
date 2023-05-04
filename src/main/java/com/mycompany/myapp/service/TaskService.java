@@ -1,7 +1,6 @@
 package com.mycompany.myapp.service;
 
 import com.mycompany.myapp.domain.Task;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +8,6 @@ import java.util.Optional;
  * Service Interface for managing {@link Task}.
  */
 public interface TaskService {
-
     /**
      * Save a task.
      *
@@ -19,12 +17,27 @@ public interface TaskService {
     Task save(Task task);
 
     /**
+     * Updates a task.
+     *
+     * @param task the entity to update.
+     * @return the persisted entity.
+     */
+    Task update(Task task);
+
+    /**
+     * Partially updates a task.
+     *
+     * @param task the entity to update partially.
+     * @return the persisted entity.
+     */
+    Optional<Task> partialUpdate(Task task);
+
+    /**
      * Get all the tasks.
      *
      * @return the list of entities.
      */
     List<Task> findAll();
-
 
     /**
      * Get the "id" task.
@@ -45,7 +58,6 @@ public interface TaskService {
      * Search for the task corresponding to the query.
      *
      * @param query the query of the search.
-     * 
      * @return the list of entities.
      */
     List<Task> search(String query);

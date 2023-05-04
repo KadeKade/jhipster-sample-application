@@ -1,0 +1,9 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "AutomatedActionType": {
+      "null": "",
+      "AUTO_DECLINE": "AUTO_DECLINE",
+      "AUTO_OFFER": "AUTO_OFFER"
+    }
+  }
+}

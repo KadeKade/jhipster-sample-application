@@ -1,0 +1,32 @@
+{
+  "applications": "*",
+  "changelogDate": "20230504080113",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "action_parameter",
+  "fields": [
+    {
+      "fieldName": "parameterName",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "parameterValue",
+      "fieldType": "String"
+    }
+  ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "ActionParameter",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityName": "criteria",
+      "otherEntityRelationshipName": "actionParameters",
+      "ownerSide": false,
+      "relationshipName": "criterias",
+      "relationshipType": "many-to-many"
+    }
+  ],
+  "service": "no"
+}

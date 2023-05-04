@@ -1,0 +1,31 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "automatedAction": {
+      "home": {
+        "title": "Automated Actions",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Automated Action",
+        "createOrEditLabel": "Create or edit a Automated Action",
+        "search": "Search for Automated Action",
+        "notFound": "No Automated Actions found"
+      },
+      "created": "A new Automated Action is created with identifier {{ param }}",
+      "updated": "A Automated Action is updated with identifier {{ param }}",
+      "deleted": "A Automated Action is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Automated Action {{ id }}?"
+      },
+      "detail": {
+        "title": "Automated Action"
+      },
+      "id": "ID",
+      "type": "Type",
+      "positiveActionDefinition": "Positive Action Definition",
+      "negativeActionDefinition": "Negative Action Definition",
+      "displayNameDe": "Display Name De",
+      "displayNameEn": "Display Name En",
+      "displayNameFr": "Display Name Fr",
+      "displayNameIt": "Display Name It"
+    }
+  }
+}

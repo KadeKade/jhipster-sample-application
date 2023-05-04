@@ -1,16 +1,14 @@
 package com.mycompany.myapp.domain;
 
-import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.*;
-
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.*;
+import javax.validation.constraints.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A Department.
@@ -19,6 +17,7 @@ import java.util.Set;
 @Table(name = "department")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @org.springframework.data.elasticsearch.annotations.Document(indexName = "department")
+@SuppressWarnings("common-java:DuplicatedBlocks")
 public class Department implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -26,12 +25,14 @@ public class Department implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
+    @Column(name = "id")
     private Long id;
 
     @NotNull
     @Column(name = "department_name", nullable = false)
     private String departmentName;
 
+    @JsonIgnoreProperties(value = { "country" }, allowSetters = true)
     @OneToOne
     @JoinColumn(unique = true)
     private Location location;
@@ -39,14 +40,22 @@ public class Department implements Serializable {
     /**
      * A relationship
      */
-    @ApiModelProperty(value = "A relationship")
+    @Schema(description = "A relationship")
     @OneToMany(mappedBy = "department")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @org.springframework.data.annotation.Transient
+    @JsonIgnoreProperties(value = { "jobs", "manager", "department" }, allowSetters = true)
     private Set<Employee> employees = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public Department id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -54,11 +63,11 @@ public class Department implements Serializable {
     }
 
     public String getDepartmentName() {
-        return departmentName;
+        return this.departmentName;
     }
 
     public Department departmentName(String departmentName) {
-        this.departmentName = departmentName;
+        this.setDepartmentName(departmentName);
         return this;
     }
 
@@ -67,24 +76,34 @@ public class Department implements Serializable {
     }
 
     public Location getLocation() {
-        return location;
-    }
-
-    public Department location(Location location) {
-        this.location = location;
-        return this;
+        return this.location;
     }
 
     public void setLocation(Location location) {
         this.location = location;
     }
 
+    public Department location(Location location) {
+        this.setLocation(location);
+        return this;
+    }
+
     public Set<Employee> getEmployees() {
-        return employees;
+        return this.employees;
+    }
+
+    public void setEmployees(Set<Employee> employees) {
+        if (this.employees != null) {
+            this.employees.forEach(i -> i.setDepartment(null));
+        }
+        if (employees != null) {
+            employees.forEach(i -> i.setDepartment(this));
+        }
+        this.employees = employees;
     }
 
     public Department employees(Set<Employee> employees) {
-        this.employees = employees;
+        this.setEmployees(employees);
         return this;
     }
 
@@ -100,9 +119,6 @@ public class Department implements Serializable {
         return this;
     }
 
-    public void setEmployees(Set<Employee> employees) {
-        this.employees = employees;
-    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -118,7 +134,8 @@ public class Department implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

@@ -1,30 +1,37 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Button, Row, Col } from 'reactstrap';
-import { Translate, ICrudGetAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getEntity } from './department.reducer';
-import { IDepartment } from 'app/shared/model/department.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IDepartmentDetailProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+import { getEntity } from './department.reducer';
 
-export const DepartmentDetail = (props: IDepartmentDetailProps) => {
+export const DepartmentDetail = () => {
+  const dispatch = useAppDispatch();
+
+  const { id } = useParams<'id'>();
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
   }, []);
 
-  const { departmentEntity } = props;
+  const departmentEntity = useAppSelector(state => state.department.entity);
   return (
     <Row>
       <Col md="8">
-        <h2>
-          <Translate contentKey="jhipsterSampleApplicationApp.department.detail.title">Department</Translate> [<b>{departmentEntity.id}</b>]
+        <h2 data-cy="departmentDetailsHeading">
+          <Translate contentKey="jhipsterSampleApplicationApp.department.detail.title">Department</Translate>
         </h2>
         <dl className="jh-entity-details">
+          <dt>
+            <span id="id">
+              <Translate contentKey="global.field.id">ID</Translate>
+            </span>
+          </dt>
+          <dd>{departmentEntity.id}</dd>
           <dt>
             <span id="departmentName">
               <Translate contentKey="jhipsterSampleApplicationApp.department.departmentName">Department Name</Translate>
@@ -36,7 +43,7 @@ export const DepartmentDetail = (props: IDepartmentDetailProps) => {
           </dt>
           <dd>{departmentEntity.location ? departmentEntity.location.id : ''}</dd>
         </dl>
-        <Button tag={Link} to="/department" replace color="info">
+        <Button tag={Link} to="/department" replace color="info" data-cy="entityDetailsBackButton">
           <FontAwesomeIcon icon="arrow-left" />{' '}
           <span className="d-none d-md-inline">
             <Translate contentKey="entity.action.back">Back</Translate>
@@ -54,13 +61,4 @@ export const DepartmentDetail = (props: IDepartmentDetailProps) => {
   );
 };
 
-const mapStateToProps = ({ department }: IRootState) => ({
-  departmentEntity: department.entity,
-});
-
-const mapDispatchToProps = { getEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(DepartmentDetail);
+export default DepartmentDetail;

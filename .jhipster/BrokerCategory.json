@@ -1,0 +1,28 @@
+{
+  "applications": "*",
+  "changelogDate": "20230504080114",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "broker_category",
+  "fields": [
+    {
+      "fieldName": "displayName",
+      "fieldType": "String"
+    }
+  ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "BrokerCategory",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityName": "criteriaSet",
+      "otherEntityRelationshipName": "brokerCategories",
+      "ownerSide": false,
+      "relationshipName": "criteriaSets",
+      "relationshipType": "many-to-many"
+    }
+  ],
+  "service": "no"
+}

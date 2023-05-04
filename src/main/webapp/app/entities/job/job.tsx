@@ -1,61 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, InputGroup, Col, Row, Table } from 'reactstrap';
-import { AvForm, AvGroup, AvInput } from 'availity-reactstrap-validation';
-import {
-  Translate,
-  translate,
-  ICrudSearchAction,
-  ICrudGetAllAction,
-  getSortState,
-  IPaginationBaseState,
-  JhiPagination,
-  JhiItemCount,
-} from 'react-jhipster';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Button, Input, InputGroup, FormGroup, Form, Row, Col, Table } from 'reactstrap';
+import { Translate, translate, getSortState, JhiPagination, JhiItemCount } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getSearchEntities, getEntities } from './job.reducer';
-import { IJob } from 'app/shared/model/job.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
-import { ITEMS_PER_PAGE } from 'app/shared/util/pagination.constants';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/util/pagination.constants';
 import { overridePaginationStateWithQueryParams } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IJobProps extends StateProps, DispatchProps, RouteComponentProps<{ url: string }> {}
+import { IJob } from 'app/shared/model/job.model';
+import { searchEntities, getEntities } from './job.reducer';
 
-export const Job = (props: IJobProps) => {
+export const Job = () => {
+  const dispatch = useAppDispatch();
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState('');
   const [paginationState, setPaginationState] = useState(
-    overridePaginationStateWithQueryParams(getSortState(props.location, ITEMS_PER_PAGE), props.location.search)
+    overridePaginationStateWithQueryParams(getSortState(location, ITEMS_PER_PAGE, 'id'), location.search)
   );
+
+  const jobList = useAppSelector(state => state.job.entities);
+  const loading = useAppSelector(state => state.job.loading);
+  const totalItems = useAppSelector(state => state.job.totalItems);
 
   const getAllEntities = () => {
     if (search) {
-      props.getSearchEntities(
-        search,
-        paginationState.activePage - 1,
-        paginationState.itemsPerPage,
-        `${paginationState.sort},${paginationState.order}`
+      dispatch(
+        searchEntities({
+          query: search,
+          page: paginationState.activePage - 1,
+          size: paginationState.itemsPerPage,
+          sort: `${paginationState.sort},${paginationState.order}`,
+        })
       );
     } else {
-      props.getEntities(paginationState.activePage - 1, paginationState.itemsPerPage, `${paginationState.sort},${paginationState.order}`);
+      dispatch(
+        getEntities({
+          page: paginationState.activePage - 1,
+          size: paginationState.itemsPerPage,
+          sort: `${paginationState.sort},${paginationState.order}`,
+        })
+      );
     }
   };
 
-  const startSearching = () => {
+  const startSearching = e => {
     if (search) {
       setPaginationState({
         ...paginationState,
         activePage: 1,
       });
-      props.getSearchEntities(
-        search,
-        paginationState.activePage - 1,
-        paginationState.itemsPerPage,
-        `${paginationState.sort},${paginationState.order}`
+      dispatch(
+        searchEntities({
+          query: search,
+          page: paginationState.activePage - 1,
+          size: paginationState.itemsPerPage,
+          sort: `${paginationState.sort},${paginationState.order}`,
+        })
       );
     }
+    e.preventDefault();
   };
 
   const clear = () => {
@@ -64,7 +72,7 @@ export const Job = (props: IJobProps) => {
       ...paginationState,
       activePage: 1,
     });
-    props.getEntities();
+    dispatch(getEntities({}));
   };
 
   const handleSearch = event => setSearch(event.target.value);
@@ -72,8 +80,8 @@ export const Job = (props: IJobProps) => {
   const sortEntities = () => {
     getAllEntities();
     const endURL = `?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`;
-    if (props.location.search !== endURL) {
-      props.history.push(`${props.location.pathname}${endURL}`);
+    if (location.search !== endURL) {
+      navigate(`${location.pathname}${endURL}`);
     }
   };
 
@@ -82,9 +90,9 @@ export const Job = (props: IJobProps) => {
   }, [paginationState.activePage, paginationState.order, paginationState.sort, search]);
 
   useEffect(() => {
-    const params = new URLSearchParams(props.location.search);
+    const params = new URLSearchParams(location.search);
     const page = params.get('page');
-    const sort = params.get('sort');
+    const sort = params.get(SORT);
     if (page && sort) {
       const sortSplit = sort.split(',');
       setPaginationState({
@@ -94,12 +102,12 @@ export const Job = (props: IJobProps) => {
         order: sortSplit[1],
       });
     }
-  }, [props.location.search]);
+  }, [location.search]);
 
   const sort = p => () => {
     setPaginationState({
       ...paginationState,
-      order: paginationState.order === 'asc' ? 'desc' : 'asc',
+      order: paginationState.order === ASC ? DESC : ASC,
       sort: p,
     });
   };
@@ -110,26 +118,35 @@ export const Job = (props: IJobProps) => {
       activePage: currentPage,
     });
 
-  const { jobList, match, loading, totalItems } = props;
+  const handleSyncList = () => {
+    sortEntities();
+  };
+
   return (
     <div>
-      <h2 id="job-heading">
+      <h2 id="job-heading" data-cy="JobHeading">
         <Translate contentKey="jhipsterSampleApplicationApp.job.home.title">Jobs</Translate>
-        <Link to={`${match.url}/new`} className="btn btn-primary float-right jh-create-entity" id="jh-create-entity">
-          <FontAwesomeIcon icon="plus" />
-          &nbsp;
-          <Translate contentKey="jhipsterSampleApplicationApp.job.home.createLabel">Create new Job</Translate>
-        </Link>
+        <div className="d-flex justify-content-end">
+          <Button className="me-2" color="info" onClick={handleSyncList} disabled={loading}>
+            <FontAwesomeIcon icon="sync" spin={loading} />{' '}
+            <Translate contentKey="jhipsterSampleApplicationApp.job.home.refreshListLabel">Refresh List</Translate>
+          </Button>
+          <Link to="/job/new" className="btn btn-primary jh-create-entity" id="jh-create-entity" data-cy="entityCreateButton">
+            <FontAwesomeIcon icon="plus" />
+            &nbsp;
+            <Translate contentKey="jhipsterSampleApplicationApp.job.home.createLabel">Create new Job</Translate>
+          </Link>
+        </div>
       </h2>
       <Row>
         <Col sm="12">
-          <AvForm onSubmit={startSearching}>
-            <AvGroup>
+          <Form onSubmit={startSearching}>
+            <FormGroup>
               <InputGroup>
-                <AvInput
+                <Input
                   type="text"
                   name="search"
-                  value={search}
+                  defaultValue={search}
                   onChange={handleSearch}
                   placeholder={translate('jhipsterSampleApplicationApp.job.home.search')}
                 />
@@ -140,8 +157,8 @@ export const Job = (props: IJobProps) => {
                   <FontAwesomeIcon icon="trash" />
                 </Button>
               </InputGroup>
-            </AvGroup>
-          </AvForm>
+            </FormGroup>
+          </Form>
         </Col>
       </Row>
       <div className="table-responsive">
@@ -150,7 +167,7 @@ export const Job = (props: IJobProps) => {
             <thead>
               <tr>
                 <th className="hand" onClick={sort('id')}>
-                  <Translate contentKey="global.field.id">ID</Translate> <FontAwesomeIcon icon="sort" />
+                  <Translate contentKey="jhipsterSampleApplicationApp.job.id">ID</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
                 <th className="hand" onClick={sort('jobTitle')}>
                   <Translate contentKey="jhipsterSampleApplicationApp.job.jobTitle">Job Title</Translate> <FontAwesomeIcon icon="sort" />
@@ -169,19 +186,19 @@ export const Job = (props: IJobProps) => {
             </thead>
             <tbody>
               {jobList.map((job, i) => (
-                <tr key={`entity-${i}`}>
+                <tr key={`entity-${i}`} data-cy="entityTable">
                   <td>
-                    <Button tag={Link} to={`${match.url}/${job.id}`} color="link" size="sm">
+                    <Button tag={Link} to={`/job/${job.id}`} color="link" size="sm">
                       {job.id}
                     </Button>
                   </td>
                   <td>{job.jobTitle}</td>
                   <td>{job.minSalary}</td>
                   <td>{job.maxSalary}</td>
-                  <td>{job.employee ? <Link to={`employee/${job.employee.id}`}>{job.employee.id}</Link> : ''}</td>
-                  <td className="text-right">
+                  <td>{job.employee ? <Link to={`/employee/${job.employee.id}`}>{job.employee.id}</Link> : ''}</td>
+                  <td className="text-end">
                     <div className="btn-group flex-btn-group-container">
-                      <Button tag={Link} to={`${match.url}/${job.id}`} color="info" size="sm">
+                      <Button tag={Link} to={`/job/${job.id}`} color="info" size="sm" data-cy="entityDetailsButton">
                         <FontAwesomeIcon icon="eye" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.view">View</Translate>
@@ -189,9 +206,10 @@ export const Job = (props: IJobProps) => {
                       </Button>
                       <Button
                         tag={Link}
-                        to={`${match.url}/${job.id}/edit?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
+                        to={`/job/${job.id}/edit?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
                         color="primary"
                         size="sm"
+                        data-cy="entityEditButton"
                       >
                         <FontAwesomeIcon icon="pencil-alt" />{' '}
                         <span className="d-none d-md-inline">
@@ -200,9 +218,10 @@ export const Job = (props: IJobProps) => {
                       </Button>
                       <Button
                         tag={Link}
-                        to={`${match.url}/${job.id}/delete?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
+                        to={`/job/${job.id}/delete?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
                         color="danger"
                         size="sm"
+                        data-cy="entityDeleteButton"
                       >
                         <FontAwesomeIcon icon="trash" />{' '}
                         <span className="d-none d-md-inline">
@@ -223,20 +242,20 @@ export const Job = (props: IJobProps) => {
           )
         )}
       </div>
-      {props.totalItems ? (
+      {totalItems ? (
         <div className={jobList && jobList.length > 0 ? '' : 'd-none'}>
-          <Row className="justify-content-center">
+          <div className="justify-content-center d-flex">
             <JhiItemCount page={paginationState.activePage} total={totalItems} itemsPerPage={paginationState.itemsPerPage} i18nEnabled />
-          </Row>
-          <Row className="justify-content-center">
+          </div>
+          <div className="justify-content-center d-flex">
             <JhiPagination
               activePage={paginationState.activePage}
               onSelect={handlePagination}
               maxButtons={5}
               itemsPerPage={paginationState.itemsPerPage}
-              totalItems={props.totalItems}
+              totalItems={totalItems}
             />
-          </Row>
+          </div>
         </div>
       ) : (
         ''
@@ -245,18 +264,4 @@ export const Job = (props: IJobProps) => {
   );
 };
 
-const mapStateToProps = ({ job }: IRootState) => ({
-  jobList: job.entities,
-  loading: job.loading,
-  totalItems: job.totalItems,
-});
-
-const mapDispatchToProps = {
-  getSearchEntities,
-  getEntities,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(Job);
+export default Job;

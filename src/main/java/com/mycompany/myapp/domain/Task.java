@@ -1,25 +1,23 @@
 package com.mycompany.myapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.annotations.ApiModel;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Task entity.\n@author The JHipster team.
  */
-@ApiModel(description = "Task entity.\n@author The JHipster team.")
+@Schema(description = "Task entity.\n@author The JHipster team.")
 @Entity
 @Table(name = "task")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @org.springframework.data.elasticsearch.annotations.Document(indexName = "task")
+@SuppressWarnings("common-java:DuplicatedBlocks")
 public class Task implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -27,6 +25,7 @@ public class Task implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "title")
@@ -37,12 +36,19 @@ public class Task implements Serializable {
 
     @ManyToMany(mappedBy = "tasks")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    @JsonIgnore
+    @org.springframework.data.annotation.Transient
+    @JsonIgnoreProperties(value = { "tasks", "employee" }, allowSetters = true)
     private Set<Job> jobs = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public Task id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -50,11 +56,11 @@ public class Task implements Serializable {
     }
 
     public String getTitle() {
-        return title;
+        return this.title;
     }
 
     public Task title(String title) {
-        this.title = title;
+        this.setTitle(title);
         return this;
     }
 
@@ -63,11 +69,11 @@ public class Task implements Serializable {
     }
 
     public String getDescription() {
-        return description;
+        return this.description;
     }
 
     public Task description(String description) {
-        this.description = description;
+        this.setDescription(description);
         return this;
     }
 
@@ -76,11 +82,21 @@ public class Task implements Serializable {
     }
 
     public Set<Job> getJobs() {
-        return jobs;
+        return this.jobs;
+    }
+
+    public void setJobs(Set<Job> jobs) {
+        if (this.jobs != null) {
+            this.jobs.forEach(i -> i.removeTask(this));
+        }
+        if (jobs != null) {
+            jobs.forEach(i -> i.addTask(this));
+        }
+        this.jobs = jobs;
     }
 
     public Task jobs(Set<Job> jobs) {
-        this.jobs = jobs;
+        this.setJobs(jobs);
         return this;
     }
 
@@ -96,9 +112,6 @@ public class Task implements Serializable {
         return this;
     }
 
-    public void setJobs(Set<Job> jobs) {
-        this.jobs = jobs;
-    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -114,7 +127,8 @@ public class Task implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

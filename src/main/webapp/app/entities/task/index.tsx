@@ -1,23 +1,23 @@
 import React from 'react';
-import { Switch } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 
-import ErrorBoundaryRoute from 'app/shared/error/error-boundary-route';
+import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 
 import Task from './task';
 import TaskDetail from './task-detail';
 import TaskUpdate from './task-update';
 import TaskDeleteDialog from './task-delete-dialog';
 
-const Routes = ({ match }) => (
-  <>
-    <Switch>
-      <ErrorBoundaryRoute exact path={`${match.url}/new`} component={TaskUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id/edit`} component={TaskUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id`} component={TaskDetail} />
-      <ErrorBoundaryRoute path={match.url} component={Task} />
-    </Switch>
-    <ErrorBoundaryRoute exact path={`${match.url}/:id/delete`} component={TaskDeleteDialog} />
-  </>
+const TaskRoutes = () => (
+  <ErrorBoundaryRoutes>
+    <Route index element={<Task />} />
+    <Route path="new" element={<TaskUpdate />} />
+    <Route path=":id">
+      <Route index element={<TaskDetail />} />
+      <Route path="edit" element={<TaskUpdate />} />
+      <Route path="delete" element={<TaskDeleteDialog />} />
+    </Route>
+  </ErrorBoundaryRoutes>
 );
 
-export default Routes;
+export default TaskRoutes;

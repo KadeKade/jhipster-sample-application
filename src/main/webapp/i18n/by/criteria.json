@@ -1,0 +1,31 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "criteria": {
+      "home": {
+        "title": "Criteria",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Стварыць новы Criteria",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Criteria",
+        "search": "Знайсці Criteria",
+        "notFound": "No Criteria found"
+      },
+      "created": "Новы Criteria створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Criteria абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Criteria выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Criteria {{ id }}?"
+      },
+      "detail": {
+        "title": "Criteria"
+      },
+      "id": "ID",
+      "priority": "Priority",
+      "criteriaActionType": "Criteria Action Type",
+      "operator": "Operator",
+      "criteriaDefinition": "Criteria Definition",
+      "criteriaParameters": "Criteria Parameters",
+      "actionParameters": "Action Parameters",
+      "criteriaSet": "Criteria Set"
+    }
+  }
+}

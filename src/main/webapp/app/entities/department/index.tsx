@@ -1,23 +1,23 @@
 import React from 'react';
-import { Switch } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 
-import ErrorBoundaryRoute from 'app/shared/error/error-boundary-route';
+import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 
 import Department from './department';
 import DepartmentDetail from './department-detail';
 import DepartmentUpdate from './department-update';
 import DepartmentDeleteDialog from './department-delete-dialog';
 
-const Routes = ({ match }) => (
-  <>
-    <Switch>
-      <ErrorBoundaryRoute exact path={`${match.url}/new`} component={DepartmentUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id/edit`} component={DepartmentUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id`} component={DepartmentDetail} />
-      <ErrorBoundaryRoute path={match.url} component={Department} />
-    </Switch>
-    <ErrorBoundaryRoute exact path={`${match.url}/:id/delete`} component={DepartmentDeleteDialog} />
-  </>
+const DepartmentRoutes = () => (
+  <ErrorBoundaryRoutes>
+    <Route index element={<Department />} />
+    <Route path="new" element={<DepartmentUpdate />} />
+    <Route path=":id">
+      <Route index element={<DepartmentDetail />} />
+      <Route path="edit" element={<DepartmentUpdate />} />
+      <Route path="delete" element={<DepartmentDeleteDialog />} />
+    </Route>
+  </ErrorBoundaryRoutes>
 );
 
-export default Routes;
+export default DepartmentRoutes;

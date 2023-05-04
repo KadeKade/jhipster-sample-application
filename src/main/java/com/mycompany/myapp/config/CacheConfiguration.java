@@ -18,6 +18,7 @@ import org.springframework.context.annotation.*;
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
+
     private GitProperties gitProperties;
     private BuildProperties buildProperties;
     private final javax.cache.configuration.Configuration<Object, Object> jcacheConfiguration;
@@ -59,6 +60,18 @@ public class CacheConfiguration {
             createCache(cm, com.mycompany.myapp.domain.Job.class.getName());
             createCache(cm, com.mycompany.myapp.domain.Job.class.getName() + ".tasks");
             createCache(cm, com.mycompany.myapp.domain.JobHistory.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.AutomatedAction.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.ActionParameter.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.ActionParameter.class.getName() + ".criterias");
+            createCache(cm, com.mycompany.myapp.domain.BrokerCategory.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.BrokerCategory.class.getName() + ".criteriaSets");
+            createCache(cm, com.mycompany.myapp.domain.CriteriaSet.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.CriteriaSet.class.getName() + ".criterias");
+            createCache(cm, com.mycompany.myapp.domain.CriteriaSet.class.getName() + ".brokerCategories");
+            createCache(cm, com.mycompany.myapp.domain.Criteria.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.Criteria.class.getName() + ".criteriaParameters");
+            createCache(cm, com.mycompany.myapp.domain.Criteria.class.getName() + ".actionParameters");
+            createCache(cm, com.mycompany.myapp.domain.CriteriaParameter.class.getName());
             // jhipster-needle-ehcache-add-entry
         };
     }

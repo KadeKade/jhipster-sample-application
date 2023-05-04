@@ -1,7 +1,6 @@
 package com.mycompany.myapp.service;
 
 import com.mycompany.myapp.domain.Region;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +8,6 @@ import java.util.Optional;
  * Service Interface for managing {@link Region}.
  */
 public interface RegionService {
-
     /**
      * Save a region.
      *
@@ -19,12 +17,27 @@ public interface RegionService {
     Region save(Region region);
 
     /**
+     * Updates a region.
+     *
+     * @param region the entity to update.
+     * @return the persisted entity.
+     */
+    Region update(Region region);
+
+    /**
+     * Partially updates a region.
+     *
+     * @param region the entity to update partially.
+     * @return the persisted entity.
+     */
+    Optional<Region> partialUpdate(Region region);
+
+    /**
      * Get all the regions.
      *
      * @return the list of entities.
      */
     List<Region> findAll();
-
 
     /**
      * Get the "id" region.
@@ -45,7 +58,6 @@ public interface RegionService {
      * Search for the region corresponding to the query.
      *
      * @param query the query of the search.
-     * 
      * @return the list of entities.
      */
     List<Region> search(String query);

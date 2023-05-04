@@ -1,13 +1,14 @@
 package com.mycompany.myapp.domain;
 
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-import com.mycompany.myapp.web.rest.TestUtil;
 
-public class EmployeeTest {
+import com.mycompany.myapp.web.rest.TestUtil;
+import org.junit.jupiter.api.Test;
+
+class EmployeeTest {
 
     @Test
-    public void equalsVerifier() throws Exception {
+    void equalsVerifier() throws Exception {
         TestUtil.equalsVerifier(Employee.class);
         Employee employee1 = new Employee();
         employee1.setId(1L);

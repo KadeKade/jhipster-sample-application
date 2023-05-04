@@ -1,7 +1,6 @@
 package com.mycompany.myapp.service;
 
 import com.mycompany.myapp.domain.Country;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +8,6 @@ import java.util.Optional;
  * Service Interface for managing {@link Country}.
  */
 public interface CountryService {
-
     /**
      * Save a country.
      *
@@ -19,12 +17,27 @@ public interface CountryService {
     Country save(Country country);
 
     /**
+     * Updates a country.
+     *
+     * @param country the entity to update.
+     * @return the persisted entity.
+     */
+    Country update(Country country);
+
+    /**
+     * Partially updates a country.
+     *
+     * @param country the entity to update partially.
+     * @return the persisted entity.
+     */
+    Optional<Country> partialUpdate(Country country);
+
+    /**
      * Get all the countries.
      *
      * @return the list of entities.
      */
     List<Country> findAll();
-
 
     /**
      * Get the "id" country.
@@ -45,7 +58,6 @@ public interface CountryService {
      * Search for the country corresponding to the query.
      *
      * @param query the query of the search.
-     * 
      * @return the list of entities.
      */
     List<Country> search(String query);

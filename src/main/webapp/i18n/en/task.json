@@ -3,6 +3,7 @@
     "task": {
       "home": {
         "title": "Tasks",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Task",
         "createOrEditLabel": "Create or edit a Task",
         "search": "Search for Task",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Task"
       },
+      "id": "ID",
       "title": "Title",
       "description": "Description",
       "job": "Job"

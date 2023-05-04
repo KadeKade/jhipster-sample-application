@@ -1,58 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, InputGroup, Col, Row, Table } from 'reactstrap';
-import { AvForm, AvGroup, AvInput } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudSearchAction, ICrudGetAllAction } from 'react-jhipster';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Button, Input, InputGroup, FormGroup, Form, Row, Col, Table } from 'reactstrap';
+import { Translate, translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getSearchEntities, getEntities } from './department.reducer';
-import { IDepartment } from 'app/shared/model/department.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IDepartmentProps extends StateProps, DispatchProps, RouteComponentProps<{ url: string }> {}
+import { IDepartment } from 'app/shared/model/department.model';
+import { searchEntities, getEntities } from './department.reducer';
 
-export const Department = (props: IDepartmentProps) => {
+export const Department = () => {
+  const dispatch = useAppDispatch();
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState('');
 
+  const departmentList = useAppSelector(state => state.department.entities);
+  const loading = useAppSelector(state => state.department.loading);
+
   useEffect(() => {
-    props.getEntities();
+    dispatch(getEntities({}));
   }, []);
 
-  const startSearching = () => {
+  const startSearching = e => {
     if (search) {
-      props.getSearchEntities(search);
+      dispatch(searchEntities({ query: search }));
     }
+    e.preventDefault();
   };
 
   const clear = () => {
     setSearch('');
-    props.getEntities();
+    dispatch(getEntities({}));
   };
 
   const handleSearch = event => setSearch(event.target.value);
 
-  const { departmentList, match, loading } = props;
+  const handleSyncList = () => {
+    dispatch(getEntities({}));
+  };
+
   return (
     <div>
-      <h2 id="department-heading">
+      <h2 id="department-heading" data-cy="DepartmentHeading">
         <Translate contentKey="jhipsterSampleApplicationApp.department.home.title">Departments</Translate>
-        <Link to={`${match.url}/new`} className="btn btn-primary float-right jh-create-entity" id="jh-create-entity">
-          <FontAwesomeIcon icon="plus" />
-          &nbsp;
-          <Translate contentKey="jhipsterSampleApplicationApp.department.home.createLabel">Create new Department</Translate>
-        </Link>
+        <div className="d-flex justify-content-end">
+          <Button className="me-2" color="info" onClick={handleSyncList} disabled={loading}>
+            <FontAwesomeIcon icon="sync" spin={loading} />{' '}
+            <Translate contentKey="jhipsterSampleApplicationApp.department.home.refreshListLabel">Refresh List</Translate>
+          </Button>
+          <Link to="/department/new" className="btn btn-primary jh-create-entity" id="jh-create-entity" data-cy="entityCreateButton">
+            <FontAwesomeIcon icon="plus" />
+            &nbsp;
+            <Translate contentKey="jhipsterSampleApplicationApp.department.home.createLabel">Create new Department</Translate>
+          </Link>
+        </div>
       </h2>
       <Row>
         <Col sm="12">
-          <AvForm onSubmit={startSearching}>
-            <AvGroup>
+          <Form onSubmit={startSearching}>
+            <FormGroup>
               <InputGroup>
-                <AvInput
+                <Input
                   type="text"
                   name="search"
-                  value={search}
+                  defaultValue={search}
                   onChange={handleSearch}
                   placeholder={translate('jhipsterSampleApplicationApp.department.home.search')}
                 />
@@ -63,8 +78,8 @@ export const Department = (props: IDepartmentProps) => {
                   <FontAwesomeIcon icon="trash" />
                 </Button>
               </InputGroup>
-            </AvGroup>
-          </AvForm>
+            </FormGroup>
+          </Form>
         </Col>
       </Row>
       <div className="table-responsive">
@@ -73,7 +88,7 @@ export const Department = (props: IDepartmentProps) => {
             <thead>
               <tr>
                 <th>
-                  <Translate contentKey="global.field.id">ID</Translate>
+                  <Translate contentKey="jhipsterSampleApplicationApp.department.id">ID</Translate>
                 </th>
                 <th>
                   <Translate contentKey="jhipsterSampleApplicationApp.department.departmentName">Department Name</Translate>
@@ -86,29 +101,29 @@ export const Department = (props: IDepartmentProps) => {
             </thead>
             <tbody>
               {departmentList.map((department, i) => (
-                <tr key={`entity-${i}`}>
+                <tr key={`entity-${i}`} data-cy="entityTable">
                   <td>
-                    <Button tag={Link} to={`${match.url}/${department.id}`} color="link" size="sm">
+                    <Button tag={Link} to={`/department/${department.id}`} color="link" size="sm">
                       {department.id}
                     </Button>
                   </td>
                   <td>{department.departmentName}</td>
-                  <td>{department.location ? <Link to={`location/${department.location.id}`}>{department.location.id}</Link> : ''}</td>
-                  <td className="text-right">
+                  <td>{department.location ? <Link to={`/location/${department.location.id}`}>{department.location.id}</Link> : ''}</td>
+                  <td className="text-end">
                     <div className="btn-group flex-btn-group-container">
-                      <Button tag={Link} to={`${match.url}/${department.id}`} color="info" size="sm">
+                      <Button tag={Link} to={`/department/${department.id}`} color="info" size="sm" data-cy="entityDetailsButton">
                         <FontAwesomeIcon icon="eye" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.view">View</Translate>
                         </span>
                       </Button>
-                      <Button tag={Link} to={`${match.url}/${department.id}/edit`} color="primary" size="sm">
+                      <Button tag={Link} to={`/department/${department.id}/edit`} color="primary" size="sm" data-cy="entityEditButton">
                         <FontAwesomeIcon icon="pencil-alt" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.edit">Edit</Translate>
                         </span>
                       </Button>
-                      <Button tag={Link} to={`${match.url}/${department.id}/delete`} color="danger" size="sm">
+                      <Button tag={Link} to={`/department/${department.id}/delete`} color="danger" size="sm" data-cy="entityDeleteButton">
                         <FontAwesomeIcon icon="trash" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -132,17 +147,4 @@ export const Department = (props: IDepartmentProps) => {
   );
 };
 
-const mapStateToProps = ({ department }: IRootState) => ({
-  departmentList: department.entities,
-  loading: department.loading,
-});
-
-const mapDispatchToProps = {
-  getSearchEntities,
-  getEntities,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(Department);
+export default Department;

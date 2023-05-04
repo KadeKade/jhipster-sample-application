@@ -1,5 +1,10 @@
 {
-  "name": "Task",
+  "applications": "*",
+  "changelogDate": "20200830205717",
+  "clientRootFolder": "",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "task",
   "fields": [
     {
       "fieldName": "title",
@@ -10,26 +15,21 @@
       "fieldType": "String"
     }
   ],
+  "fluentMethods": true,
+  "javadoc": "Task entity.\\n@author The JHipster team.",
+  "jpaMetamodelFiltering": false,
+  "name": "Task",
+  "pagination": "no",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "many-to-many",
+      "otherEntityField": "id",
       "otherEntityName": "job",
       "otherEntityRelationshipName": "task",
+      "ownerSide": false,
       "relationshipName": "job",
-      "otherEntityField": "id",
-      "ownerSide": false
+      "relationshipType": "many-to-many"
     }
   ],
-  "changelogDate": "20200830205717",
-  "javadoc": "Task entity.\\n@author The JHipster team.",
-  "entityTableName": "task",
-  "dto": "no",
-  "pagination": "no",
-  "service": "serviceImpl",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": "*"
+  "service": "serviceImpl"
 }

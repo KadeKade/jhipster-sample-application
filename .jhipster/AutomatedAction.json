@@ -1,0 +1,45 @@
+{
+  "applications": "*",
+  "changelogDate": "20230504080112",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "automated_action",
+  "fields": [
+    {
+      "fieldName": "type",
+      "fieldType": "AutomatedActionType",
+      "fieldValues": "AUTO_DECLINE,AUTO_OFFER"
+    },
+    {
+      "fieldName": "positiveActionDefinition",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "negativeActionDefinition",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "displayNameDe",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "displayNameEn",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "displayNameFr",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "displayNameIt",
+      "fieldType": "String"
+    }
+  ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "AutomatedAction",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [],
+  "service": "no"
+}

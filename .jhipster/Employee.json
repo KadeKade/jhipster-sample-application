@@ -1,5 +1,10 @@
 {
-  "name": "Employee",
+  "applications": "*",
+  "changelogDate": "20200830205817",
+  "clientRootFolder": "",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "employee",
   "fields": [
     {
       "fieldName": "firstName",
@@ -31,39 +36,34 @@
       "fieldType": "Long"
     }
   ],
+  "fluentMethods": true,
+  "javadoc": "The Employee entity.",
+  "jpaMetamodelFiltering": false,
+  "name": "Employee",
+  "pagination": "infinite-scroll",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "one-to-many",
       "otherEntityName": "job",
       "otherEntityRelationshipName": "employee",
-      "relationshipName": "job"
+      "relationshipName": "job",
+      "relationshipType": "one-to-many"
     },
     {
-      "relationshipType": "many-to-one",
+      "otherEntityField": "id",
       "otherEntityName": "employee",
       "otherEntityRelationshipName": "employee",
       "relationshipName": "manager",
-      "otherEntityField": "id"
+      "relationshipType": "many-to-one"
     },
     {
-      "relationshipType": "many-to-one",
+      "javadoc": "Another side of the same relationship",
+      "otherEntityField": "id",
       "otherEntityName": "department",
       "otherEntityRelationshipName": "employee",
-      "javadoc": "Another side of the same relationship",
       "relationshipName": "department",
-      "otherEntityField": "id"
+      "relationshipType": "many-to-one"
     }
   ],
-  "changelogDate": "20200830205817",
-  "javadoc": "The Employee entity.",
-  "entityTableName": "employee",
-  "dto": "no",
-  "pagination": "infinite-scroll",
-  "service": "no",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": "*"
+  "service": "no"
 }

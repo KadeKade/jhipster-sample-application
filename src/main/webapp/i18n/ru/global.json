@@ -15,6 +15,12 @@
         "employee": "Employee",
         "job": "Job",
         "jobHistory": "Job History",
+        "automatedAction": "Automated Action",
+        "actionParameter": "Action Parameter",
+        "brokerCategory": "Broker Category",
+        "criteriaSet": "Criteria Set",
+        "criteria": "Criteria",
+        "criteriaParameter": "Criteria Parameter",
         "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
       },
       "account": {

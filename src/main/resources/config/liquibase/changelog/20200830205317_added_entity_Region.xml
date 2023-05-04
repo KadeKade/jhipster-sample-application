@@ -3,10 +3,9 @@
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-    
     <!--
         Added the entity Region.
     -->
@@ -22,9 +21,6 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="20200830205317-1-relations" author="jhipster">
-
-    </changeSet>
     <!-- jhipster-needle-liquibase-add-changeset - JHipster will add changesets here -->
 
     <!--
@@ -39,11 +35,11 @@
         <loadData
                   file="config/liquibase/fake-data/region.csv"
                   separator=";"
-                  tableName="region">
+                  tableName="region"
+                  usePreparedStatements="true">
             <column name="id" type="numeric"/>
             <column name="region_name" type="string"/>
             <!-- jhipster-needle-liquibase-add-loadcolumn - JHipster (and/or extensions) can add load columns here -->
         </loadData>
     </changeSet>
-
 </databaseChangeLog>

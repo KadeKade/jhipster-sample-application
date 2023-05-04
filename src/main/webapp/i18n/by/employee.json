@@ -3,6 +3,7 @@
     "employee": {
       "home": {
         "title": "Employees",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Стварыць новы Employee",
         "createOrEditLabel": "Стварыць або адрэдагаваць Employee",
         "search": "Знайсці Employee",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Employee"
       },
+      "id": "ID",
       "firstName": "First Name",
       "lastName": "Last Name",
       "email": "Email",

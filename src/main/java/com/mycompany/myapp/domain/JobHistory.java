@@ -1,15 +1,12 @@
 package com.mycompany.myapp.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.mycompany.myapp.domain.enumeration.Language;
 import java.io.Serializable;
 import java.time.Instant;
-
-import com.mycompany.myapp.domain.enumeration.Language;
+import javax.persistence.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A JobHistory.
@@ -18,6 +15,7 @@ import com.mycompany.myapp.domain.enumeration.Language;
 @Table(name = "job_history")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @org.springframework.data.elasticsearch.annotations.Document(indexName = "jobhistory")
+@SuppressWarnings("common-java:DuplicatedBlocks")
 public class JobHistory implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -25,6 +23,7 @@ public class JobHistory implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "start_date")
@@ -37,21 +36,30 @@ public class JobHistory implements Serializable {
     @Column(name = "language")
     private Language language;
 
+    @JsonIgnoreProperties(value = { "tasks", "employee" }, allowSetters = true)
     @OneToOne
     @JoinColumn(unique = true)
     private Job job;
 
+    @JsonIgnoreProperties(value = { "location", "employees" }, allowSetters = true)
     @OneToOne
     @JoinColumn(unique = true)
     private Department department;
 
+    @JsonIgnoreProperties(value = { "jobs", "manager", "department" }, allowSetters = true)
     @OneToOne
     @JoinColumn(unique = true)
     private Employee employee;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public JobHistory id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -59,11 +67,11 @@ public class JobHistory implements Serializable {
     }
 
     public Instant getStartDate() {
-        return startDate;
+        return this.startDate;
     }
 
     public JobHistory startDate(Instant startDate) {
-        this.startDate = startDate;
+        this.setStartDate(startDate);
         return this;
     }
 
@@ -72,11 +80,11 @@ public class JobHistory implements Serializable {
     }
 
     public Instant getEndDate() {
-        return endDate;
+        return this.endDate;
     }
 
     public JobHistory endDate(Instant endDate) {
-        this.endDate = endDate;
+        this.setEndDate(endDate);
         return this;
     }
 
@@ -85,11 +93,11 @@ public class JobHistory implements Serializable {
     }
 
     public Language getLanguage() {
-        return language;
+        return this.language;
     }
 
     public JobHistory language(Language language) {
-        this.language = language;
+        this.setLanguage(language);
         return this;
     }
 
@@ -98,43 +106,44 @@ public class JobHistory implements Serializable {
     }
 
     public Job getJob() {
-        return job;
-    }
-
-    public JobHistory job(Job job) {
-        this.job = job;
-        return this;
+        return this.job;
     }
 
     public void setJob(Job job) {
         this.job = job;
     }
 
-    public Department getDepartment() {
-        return department;
+    public JobHistory job(Job job) {
+        this.setJob(job);
+        return this;
     }
 
-    public JobHistory department(Department department) {
-        this.department = department;
-        return this;
+    public Department getDepartment() {
+        return this.department;
     }
 
     public void setDepartment(Department department) {
         this.department = department;
     }
 
-    public Employee getEmployee() {
-        return employee;
+    public JobHistory department(Department department) {
+        this.setDepartment(department);
+        return this;
     }
 
-    public JobHistory employee(Employee employee) {
-        this.employee = employee;
-        return this;
+    public Employee getEmployee() {
+        return this.employee;
     }
 
     public void setEmployee(Employee employee) {
         this.employee = employee;
     }
+
+    public JobHistory employee(Employee employee) {
+        this.setEmployee(employee);
+        return this;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -150,7 +159,8 @@ public class JobHistory implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

@@ -1,25 +1,26 @@
 package com.mycompany.myapp.web.rest;
 
+import static org.elasticsearch.index.query.QueryBuilders.*;
+
 import com.mycompany.myapp.domain.Department;
+import com.mycompany.myapp.repository.DepartmentRepository;
 import com.mycompany.myapp.service.DepartmentService;
 import com.mycompany.myapp.web.rest.errors.BadRequestAlertException;
-
-import io.github.jhipster.web.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing {@link com.mycompany.myapp.domain.Department}.
@@ -37,8 +38,11 @@ public class DepartmentResource {
 
     private final DepartmentService departmentService;
 
-    public DepartmentResource(DepartmentService departmentService) {
+    private final DepartmentRepository departmentRepository;
+
+    public DepartmentResource(DepartmentService departmentService, DepartmentRepository departmentRepository) {
         this.departmentService = departmentService;
+        this.departmentRepository = departmentRepository;
     }
 
     /**
@@ -55,30 +59,80 @@ public class DepartmentResource {
             throw new BadRequestAlertException("A new department cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Department result = departmentService.save(department);
-        return ResponseEntity.created(new URI("/api/departments/" + result.getId()))
+        return ResponseEntity
+            .created(new URI("/api/departments/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
     /**
-     * {@code PUT  /departments} : Updates an existing department.
+     * {@code PUT  /departments/:id} : Updates an existing department.
      *
+     * @param id the id of the department to save.
      * @param department the department to update.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated department,
      * or with status {@code 400 (Bad Request)} if the department is not valid,
      * or with status {@code 500 (Internal Server Error)} if the department couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PutMapping("/departments")
-    public ResponseEntity<Department> updateDepartment(@Valid @RequestBody Department department) throws URISyntaxException {
-        log.debug("REST request to update Department : {}", department);
+    @PutMapping("/departments/{id}")
+    public ResponseEntity<Department> updateDepartment(
+        @PathVariable(value = "id", required = false) final Long id,
+        @Valid @RequestBody Department department
+    ) throws URISyntaxException {
+        log.debug("REST request to update Department : {}, {}", id, department);
         if (department.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        Department result = departmentService.save(department);
-        return ResponseEntity.ok()
+        if (!Objects.equals(id, department.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!departmentRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
+        Department result = departmentService.update(department);
+        return ResponseEntity
+            .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, department.getId().toString()))
             .body(result);
+    }
+
+    /**
+     * {@code PATCH  /departments/:id} : Partial updates given fields of an existing department, field will ignore if it is null
+     *
+     * @param id the id of the department to save.
+     * @param department the department to update.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated department,
+     * or with status {@code 400 (Bad Request)} if the department is not valid,
+     * or with status {@code 404 (Not Found)} if the department is not found,
+     * or with status {@code 500 (Internal Server Error)} if the department couldn't be updated.
+     * @throws URISyntaxException if the Location URI syntax is incorrect.
+     */
+    @PatchMapping(value = "/departments/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    public ResponseEntity<Department> partialUpdateDepartment(
+        @PathVariable(value = "id", required = false) final Long id,
+        @NotNull @RequestBody Department department
+    ) throws URISyntaxException {
+        log.debug("REST request to partial update Department partially : {}, {}", id, department);
+        if (department.getId() == null) {
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (!Objects.equals(id, department.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!departmentRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
+        Optional<Department> result = departmentService.partialUpdate(department);
+
+        return ResponseUtil.wrapOrNotFound(
+            result,
+            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, department.getId().toString())
+        );
     }
 
     /**
@@ -115,7 +169,10 @@ public class DepartmentResource {
     public ResponseEntity<Void> deleteDepartment(@PathVariable Long id) {
         log.debug("REST request to delete Department : {}", id);
         departmentService.delete(id);
-        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity
+            .noContent()
+            .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
+            .build();
     }
 
     /**

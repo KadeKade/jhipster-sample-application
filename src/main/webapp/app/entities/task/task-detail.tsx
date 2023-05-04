@@ -1,30 +1,37 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Button, Row, Col } from 'reactstrap';
-import { Translate, ICrudGetAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getEntity } from './task.reducer';
-import { ITask } from 'app/shared/model/task.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface ITaskDetailProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+import { getEntity } from './task.reducer';
 
-export const TaskDetail = (props: ITaskDetailProps) => {
+export const TaskDetail = () => {
+  const dispatch = useAppDispatch();
+
+  const { id } = useParams<'id'>();
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
   }, []);
 
-  const { taskEntity } = props;
+  const taskEntity = useAppSelector(state => state.task.entity);
   return (
     <Row>
       <Col md="8">
-        <h2>
-          <Translate contentKey="jhipsterSampleApplicationApp.task.detail.title">Task</Translate> [<b>{taskEntity.id}</b>]
+        <h2 data-cy="taskDetailsHeading">
+          <Translate contentKey="jhipsterSampleApplicationApp.task.detail.title">Task</Translate>
         </h2>
         <dl className="jh-entity-details">
+          <dt>
+            <span id="id">
+              <Translate contentKey="global.field.id">ID</Translate>
+            </span>
+          </dt>
+          <dd>{taskEntity.id}</dd>
           <dt>
             <span id="title">
               <Translate contentKey="jhipsterSampleApplicationApp.task.title">Title</Translate>
@@ -38,7 +45,7 @@ export const TaskDetail = (props: ITaskDetailProps) => {
           </dt>
           <dd>{taskEntity.description}</dd>
         </dl>
-        <Button tag={Link} to="/task" replace color="info">
+        <Button tag={Link} to="/task" replace color="info" data-cy="entityDetailsBackButton">
           <FontAwesomeIcon icon="arrow-left" />{' '}
           <span className="d-none d-md-inline">
             <Translate contentKey="entity.action.back">Back</Translate>
@@ -56,13 +63,4 @@ export const TaskDetail = (props: ITaskDetailProps) => {
   );
 };
 
-const mapStateToProps = ({ task }: IRootState) => ({
-  taskEntity: task.entity,
-});
-
-const mapDispatchToProps = { getEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(TaskDetail);
+export default TaskDetail;

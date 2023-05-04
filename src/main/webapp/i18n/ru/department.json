@@ -3,10 +3,11 @@
     "department": {
       "home": {
         "title": "Departments",
+        "refreshListLabel": "Обновить список",
         "createLabel": "Создать новый Department",
         "createOrEditLabel": "Создать или отредактировать Department",
         "search": "Найти Department",
-        "notFound": "No Departments found"
+        "notFound": "Departments не найдено"
       },
       "created": "Новый Department создан с идентификатором {{ param }}",
       "updated": "Department обновлен с идентификатором {{ param }}",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Department"
       },
+      "id": "ID",
       "departmentName": "Department Name",
       "location": "Location",
       "employee": "Employee"

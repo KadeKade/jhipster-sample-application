@@ -1,0 +1,31 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "criteriaSet": {
+      "home": {
+        "title": "Criteria Sets",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Criteria Set",
+        "createOrEditLabel": "Create or edit a Criteria Set",
+        "search": "Search for Criteria Set",
+        "notFound": "No Criteria Sets found"
+      },
+      "created": "A new Criteria Set is created with identifier {{ param }}",
+      "updated": "A Criteria Set is updated with identifier {{ param }}",
+      "deleted": "A Criteria Set is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Criteria Set {{ id }}?"
+      },
+      "detail": {
+        "title": "Criteria Set"
+      },
+      "id": "ID",
+      "name": "Name",
+      "priority": "Priority",
+      "insurerId": "Insurer Id",
+      "lobId": "Lob Id",
+      "criterias": "Criterias",
+      "automatedAction": "Automated Action",
+      "brokerCategories": "Broker Categories"
+    }
+  }
+}

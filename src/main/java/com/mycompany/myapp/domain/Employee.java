@@ -1,27 +1,24 @@
 package com.mycompany.myapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * The Employee entity.
  */
-@ApiModel(description = "The Employee entity.")
+@Schema(description = "The Employee entity.")
 @Entity
 @Table(name = "employee")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @org.springframework.data.elasticsearch.annotations.Document(indexName = "employee")
+@SuppressWarnings("common-java:DuplicatedBlocks")
 public class Employee implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -29,12 +26,13 @@ public class Employee implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
+    @Column(name = "id")
     private Long id;
 
     /**
      * The firstname attribute.
      */
-    @ApiModelProperty(value = "The firstname attribute.")
+    @Schema(description = "The firstname attribute.")
     @Column(name = "first_name")
     private String firstName;
 
@@ -58,23 +56,31 @@ public class Employee implements Serializable {
 
     @OneToMany(mappedBy = "employee")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @org.springframework.data.annotation.Transient
+    @JsonIgnoreProperties(value = { "tasks", "employee" }, allowSetters = true)
     private Set<Job> jobs = new HashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = "employees", allowSetters = true)
+    @JsonIgnoreProperties(value = { "jobs", "manager", "department" }, allowSetters = true)
     private Employee manager;
 
     /**
      * Another side of the same relationship
      */
-    @ApiModelProperty(value = "Another side of the same relationship")
+    @Schema(description = "Another side of the same relationship")
     @ManyToOne
-    @JsonIgnoreProperties(value = "employees", allowSetters = true)
+    @JsonIgnoreProperties(value = { "location", "employees" }, allowSetters = true)
     private Department department;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public Employee id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -82,11 +88,11 @@ public class Employee implements Serializable {
     }
 
     public String getFirstName() {
-        return firstName;
+        return this.firstName;
     }
 
     public Employee firstName(String firstName) {
-        this.firstName = firstName;
+        this.setFirstName(firstName);
         return this;
     }
 
@@ -95,11 +101,11 @@ public class Employee implements Serializable {
     }
 
     public String getLastName() {
-        return lastName;
+        return this.lastName;
     }
 
     public Employee lastName(String lastName) {
-        this.lastName = lastName;
+        this.setLastName(lastName);
         return this;
     }
 
@@ -108,11 +114,11 @@ public class Employee implements Serializable {
     }
 
     public String getEmail() {
-        return email;
+        return this.email;
     }
 
     public Employee email(String email) {
-        this.email = email;
+        this.setEmail(email);
         return this;
     }
 
@@ -121,11 +127,11 @@ public class Employee implements Serializable {
     }
 
     public String getPhoneNumber() {
-        return phoneNumber;
+        return this.phoneNumber;
     }
 
     public Employee phoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+        this.setPhoneNumber(phoneNumber);
         return this;
     }
 
@@ -134,11 +140,11 @@ public class Employee implements Serializable {
     }
 
     public Instant getHireDate() {
-        return hireDate;
+        return this.hireDate;
     }
 
     public Employee hireDate(Instant hireDate) {
-        this.hireDate = hireDate;
+        this.setHireDate(hireDate);
         return this;
     }
 
@@ -147,11 +153,11 @@ public class Employee implements Serializable {
     }
 
     public Long getSalary() {
-        return salary;
+        return this.salary;
     }
 
     public Employee salary(Long salary) {
-        this.salary = salary;
+        this.setSalary(salary);
         return this;
     }
 
@@ -160,11 +166,11 @@ public class Employee implements Serializable {
     }
 
     public Long getCommissionPct() {
-        return commissionPct;
+        return this.commissionPct;
     }
 
     public Employee commissionPct(Long commissionPct) {
-        this.commissionPct = commissionPct;
+        this.setCommissionPct(commissionPct);
         return this;
     }
 
@@ -173,11 +179,21 @@ public class Employee implements Serializable {
     }
 
     public Set<Job> getJobs() {
-        return jobs;
+        return this.jobs;
+    }
+
+    public void setJobs(Set<Job> jobs) {
+        if (this.jobs != null) {
+            this.jobs.forEach(i -> i.setEmployee(null));
+        }
+        if (jobs != null) {
+            jobs.forEach(i -> i.setEmployee(this));
+        }
+        this.jobs = jobs;
     }
 
     public Employee jobs(Set<Job> jobs) {
-        this.jobs = jobs;
+        this.setJobs(jobs);
         return this;
     }
 
@@ -193,35 +209,32 @@ public class Employee implements Serializable {
         return this;
     }
 
-    public void setJobs(Set<Job> jobs) {
-        this.jobs = jobs;
-    }
-
     public Employee getManager() {
-        return manager;
-    }
-
-    public Employee manager(Employee employee) {
-        this.manager = employee;
-        return this;
+        return this.manager;
     }
 
     public void setManager(Employee employee) {
         this.manager = employee;
     }
 
-    public Department getDepartment() {
-        return department;
+    public Employee manager(Employee employee) {
+        this.setManager(employee);
+        return this;
     }
 
-    public Employee department(Department department) {
-        this.department = department;
-        return this;
+    public Department getDepartment() {
+        return this.department;
     }
 
     public void setDepartment(Department department) {
         this.department = department;
     }
+
+    public Employee department(Department department) {
+        this.setDepartment(department);
+        return this;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -237,7 +250,8 @@ public class Employee implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

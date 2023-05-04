@@ -1,39 +1,47 @@
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
-import { Translate, ICrudGetAction, ICrudDeleteAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IEmployee } from 'app/shared/model/employee.model';
-import { IRootState } from 'app/shared/reducers';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 import { getEntity, deleteEntity } from './employee.reducer';
 
-export interface IEmployeeDeleteDialogProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const EmployeeDeleteDialog = () => {
+  const dispatch = useAppDispatch();
 
-export const EmployeeDeleteDialog = (props: IEmployeeDeleteDialogProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { id } = useParams<'id'>();
+
+  const [loadModal, setLoadModal] = useState(false);
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
+    setLoadModal(true);
   }, []);
 
+  const employeeEntity = useAppSelector(state => state.employee.entity);
+  const updateSuccess = useAppSelector(state => state.employee.updateSuccess);
+
   const handleClose = () => {
-    props.history.push('/employee');
+    navigate('/employee');
   };
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess && loadModal) {
       handleClose();
+      setLoadModal(false);
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
   const confirmDelete = () => {
-    props.deleteEntity(props.employeeEntity.id);
+    dispatch(deleteEntity(employeeEntity.id));
   };
 
-  const { employeeEntity } = props;
   return (
     <Modal isOpen toggle={handleClose}>
-      <ModalHeader toggle={handleClose}>
+      <ModalHeader toggle={handleClose} data-cy="employeeDeleteDialogHeading">
         <Translate contentKey="entity.delete.title">Confirm delete operation</Translate>
       </ModalHeader>
       <ModalBody id="jhipsterSampleApplicationApp.employee.delete.question">
@@ -47,7 +55,7 @@ export const EmployeeDeleteDialog = (props: IEmployeeDeleteDialogProps) => {
           &nbsp;
           <Translate contentKey="entity.action.cancel">Cancel</Translate>
         </Button>
-        <Button id="jhi-confirm-delete-employee" color="danger" onClick={confirmDelete}>
+        <Button id="jhi-confirm-delete-employee" data-cy="entityConfirmDeleteButton" color="danger" onClick={confirmDelete}>
           <FontAwesomeIcon icon="trash" />
           &nbsp;
           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -57,14 +65,4 @@ export const EmployeeDeleteDialog = (props: IEmployeeDeleteDialogProps) => {
   );
 };
 
-const mapStateToProps = ({ employee }: IRootState) => ({
-  employeeEntity: employee.entity,
-  updateSuccess: employee.updateSuccess,
-});
-
-const mapDispatchToProps = { getEntity, deleteEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(EmployeeDeleteDialog);
+export default EmployeeDeleteDialog;

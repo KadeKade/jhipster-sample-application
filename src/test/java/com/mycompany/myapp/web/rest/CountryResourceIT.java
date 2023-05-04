@@ -1,59 +1,58 @@
 package com.mycompany.myapp.web.rest;
 
-import com.mycompany.myapp.JhipsterSampleApplicationApp;
-import com.mycompany.myapp.domain.Country;
-import com.mycompany.myapp.repository.CountryRepository;
-import com.mycompany.myapp.repository.search.CountrySearchRepository;
-import com.mycompany.myapp.service.CountryService;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-import javax.persistence.EntityManager;
-import java.util.Collections;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.mycompany.myapp.IntegrationTest;
+import com.mycompany.myapp.domain.Country;
+import com.mycompany.myapp.repository.CountryRepository;
+import com.mycompany.myapp.repository.search.CountrySearchRepository;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
+import javax.persistence.EntityManager;
+import org.apache.commons.collections4.IterableUtils;
+import org.assertj.core.util.IterableUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Integration tests for the {@link CountryResource} REST controller.
  */
-@SpringBootTest(classes = JhipsterSampleApplicationApp.class)
-@ExtendWith(MockitoExtension.class)
+@IntegrationTest
 @AutoConfigureMockMvc
 @WithMockUser
-public class CountryResourceIT {
+class CountryResourceIT {
 
     private static final String DEFAULT_COUNTRY_NAME = "AAAAAAAAAA";
     private static final String UPDATED_COUNTRY_NAME = "BBBBBBBBBB";
+
+    private static final String ENTITY_API_URL = "/api/countries";
+    private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
+    private static final String ENTITY_SEARCH_API_URL = "/api/_search/countries";
+
+    private static Random random = new Random();
+    private static AtomicLong count = new AtomicLong(random.nextInt() + (2 * Integer.MAX_VALUE));
 
     @Autowired
     private CountryRepository countryRepository;
 
     @Autowired
-    private CountryService countryService;
-
-    /**
-     * This repository is mocked in the com.mycompany.myapp.repository.search test package.
-     *
-     * @see com.mycompany.myapp.repository.search.CountrySearchRepositoryMockConfiguration
-     */
-    @Autowired
-    private CountrySearchRepository mockCountrySearchRepository;
+    private CountrySearchRepository countrySearchRepository;
 
     @Autowired
     private EntityManager em;
@@ -70,10 +69,10 @@ public class CountryResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static Country createEntity(EntityManager em) {
-        Country country = new Country()
-            .countryName(DEFAULT_COUNTRY_NAME);
+        Country country = new Country().countryName(DEFAULT_COUNTRY_NAME);
         return country;
     }
+
     /**
      * Create an updated entity for this test.
      *
@@ -81,9 +80,14 @@ public class CountryResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static Country createUpdatedEntity(EntityManager em) {
-        Country country = new Country()
-            .countryName(UPDATED_COUNTRY_NAME);
+        Country country = new Country().countryName(UPDATED_COUNTRY_NAME);
         return country;
+    }
+
+    @AfterEach
+    public void cleanupElasticSearchRepository() {
+        countrySearchRepository.deleteAll();
+        assertThat(countrySearchRepository.count()).isEqualTo(0);
     }
 
     @BeforeEach
@@ -93,100 +97,107 @@ public class CountryResourceIT {
 
     @Test
     @Transactional
-    public void createCountry() throws Exception {
+    void createCountry() throws Exception {
         int databaseSizeBeforeCreate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
         // Create the Country
-        restCountryMockMvc.perform(post("/api/countries")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(country)))
+        restCountryMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(country)))
             .andExpect(status().isCreated());
 
         // Validate the Country in the database
         List<Country> countryList = countryRepository.findAll();
         assertThat(countryList).hasSize(databaseSizeBeforeCreate + 1);
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+                assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore + 1);
+            });
         Country testCountry = countryList.get(countryList.size() - 1);
         assertThat(testCountry.getCountryName()).isEqualTo(DEFAULT_COUNTRY_NAME);
-
-        // Validate the Country in Elasticsearch
-        verify(mockCountrySearchRepository, times(1)).save(testCountry);
     }
 
     @Test
     @Transactional
-    public void createCountryWithExistingId() throws Exception {
-        int databaseSizeBeforeCreate = countryRepository.findAll().size();
-
+    void createCountryWithExistingId() throws Exception {
         // Create the Country with an existing ID
         country.setId(1L);
 
+        int databaseSizeBeforeCreate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+
         // An entity with an existing ID cannot be created, so this API call must fail
-        restCountryMockMvc.perform(post("/api/countries")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(country)))
+        restCountryMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(country)))
             .andExpect(status().isBadRequest());
 
         // Validate the Country in the database
         List<Country> countryList = countryRepository.findAll();
         assertThat(countryList).hasSize(databaseSizeBeforeCreate);
-
-        // Validate the Country in Elasticsearch
-        verify(mockCountrySearchRepository, times(0)).save(country);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
     }
-
 
     @Test
     @Transactional
-    public void getAllCountries() throws Exception {
+    void getAllCountries() throws Exception {
         // Initialize the database
         countryRepository.saveAndFlush(country);
 
         // Get all the countryList
-        restCountryMockMvc.perform(get("/api/countries?sort=id,desc"))
+        restCountryMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(country.getId().intValue())))
             .andExpect(jsonPath("$.[*].countryName").value(hasItem(DEFAULT_COUNTRY_NAME)));
     }
-    
+
     @Test
     @Transactional
-    public void getCountry() throws Exception {
+    void getCountry() throws Exception {
         // Initialize the database
         countryRepository.saveAndFlush(country);
 
         // Get the country
-        restCountryMockMvc.perform(get("/api/countries/{id}", country.getId()))
+        restCountryMockMvc
+            .perform(get(ENTITY_API_URL_ID, country.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.id").value(country.getId().intValue()))
             .andExpect(jsonPath("$.countryName").value(DEFAULT_COUNTRY_NAME));
     }
+
     @Test
     @Transactional
-    public void getNonExistingCountry() throws Exception {
+    void getNonExistingCountry() throws Exception {
         // Get the country
-        restCountryMockMvc.perform(get("/api/countries/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+        restCountryMockMvc.perform(get(ENTITY_API_URL_ID, Long.MAX_VALUE)).andExpect(status().isNotFound());
     }
 
     @Test
     @Transactional
-    public void updateCountry() throws Exception {
+    void putExistingCountry() throws Exception {
         // Initialize the database
-        countryService.save(country);
+        countryRepository.saveAndFlush(country);
 
         int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+        countrySearchRepository.save(country);
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
 
         // Update the country
         Country updatedCountry = countryRepository.findById(country.getId()).get();
         // Disconnect from session so that the updates on updatedCountry are not directly saved in db
         em.detach(updatedCountry);
-        updatedCountry
-            .countryName(UPDATED_COUNTRY_NAME);
+        updatedCountry.countryName(UPDATED_COUNTRY_NAME);
 
-        restCountryMockMvc.perform(put("/api/countries")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(updatedCountry)))
+        restCountryMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, updatedCountry.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(updatedCountry))
+            )
             .andExpect(status().isOk());
 
         // Validate the Country in the database
@@ -194,62 +205,239 @@ public class CountryResourceIT {
         assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
         Country testCountry = countryList.get(countryList.size() - 1);
         assertThat(testCountry.getCountryName()).isEqualTo(UPDATED_COUNTRY_NAME);
-
-        // Validate the Country in Elasticsearch
-        verify(mockCountrySearchRepository, times(2)).save(testCountry);
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+                assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+                List<Country> countrySearchList = IterableUtils.toList(countrySearchRepository.findAll());
+                Country testCountrySearch = countrySearchList.get(searchDatabaseSizeAfter - 1);
+                assertThat(testCountrySearch.getCountryName()).isEqualTo(UPDATED_COUNTRY_NAME);
+            });
     }
 
     @Test
     @Transactional
-    public void updateNonExistingCountry() throws Exception {
+    void putNonExistingCountry() throws Exception {
         int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        country.setId(count.incrementAndGet());
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restCountryMockMvc.perform(put("/api/countries")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(country)))
+        restCountryMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, country.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(country))
+            )
             .andExpect(status().isBadRequest());
 
         // Validate the Country in the database
         List<Country> countryList = countryRepository.findAll();
         assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
-
-        // Validate the Country in Elasticsearch
-        verify(mockCountrySearchRepository, times(0)).save(country);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
     }
 
     @Test
     @Transactional
-    public void deleteCountry() throws Exception {
+    void putWithIdMismatchCountry() throws Exception {
+        int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        country.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restCountryMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, count.incrementAndGet())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(country))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Country in the database
+        List<Country> countryList = countryRepository.findAll();
+        assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void putWithMissingIdPathParamCountry() throws Exception {
+        int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        country.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restCountryMockMvc
+            .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(country)))
+            .andExpect(status().isMethodNotAllowed());
+
+        // Validate the Country in the database
+        List<Country> countryList = countryRepository.findAll();
+        assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void partialUpdateCountryWithPatch() throws Exception {
         // Initialize the database
-        countryService.save(country);
+        countryRepository.saveAndFlush(country);
+
+        int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+
+        // Update the country using partial update
+        Country partialUpdatedCountry = new Country();
+        partialUpdatedCountry.setId(country.getId());
+
+        partialUpdatedCountry.countryName(UPDATED_COUNTRY_NAME);
+
+        restCountryMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, partialUpdatedCountry.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedCountry))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the Country in the database
+        List<Country> countryList = countryRepository.findAll();
+        assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
+        Country testCountry = countryList.get(countryList.size() - 1);
+        assertThat(testCountry.getCountryName()).isEqualTo(UPDATED_COUNTRY_NAME);
+    }
+
+    @Test
+    @Transactional
+    void fullUpdateCountryWithPatch() throws Exception {
+        // Initialize the database
+        countryRepository.saveAndFlush(country);
+
+        int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+
+        // Update the country using partial update
+        Country partialUpdatedCountry = new Country();
+        partialUpdatedCountry.setId(country.getId());
+
+        partialUpdatedCountry.countryName(UPDATED_COUNTRY_NAME);
+
+        restCountryMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, partialUpdatedCountry.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedCountry))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the Country in the database
+        List<Country> countryList = countryRepository.findAll();
+        assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
+        Country testCountry = countryList.get(countryList.size() - 1);
+        assertThat(testCountry.getCountryName()).isEqualTo(UPDATED_COUNTRY_NAME);
+    }
+
+    @Test
+    @Transactional
+    void patchNonExistingCountry() throws Exception {
+        int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        country.setId(count.incrementAndGet());
+
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
+        restCountryMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, country.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(country))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Country in the database
+        List<Country> countryList = countryRepository.findAll();
+        assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void patchWithIdMismatchCountry() throws Exception {
+        int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        country.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restCountryMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, count.incrementAndGet())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(country))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Country in the database
+        List<Country> countryList = countryRepository.findAll();
+        assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void patchWithMissingIdPathParamCountry() throws Exception {
+        int databaseSizeBeforeUpdate = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        country.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restCountryMockMvc
+            .perform(patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(country)))
+            .andExpect(status().isMethodNotAllowed());
+
+        // Validate the Country in the database
+        List<Country> countryList = countryRepository.findAll();
+        assertThat(countryList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void deleteCountry() throws Exception {
+        // Initialize the database
+        countryRepository.saveAndFlush(country);
+        countryRepository.save(country);
+        countrySearchRepository.save(country);
 
         int databaseSizeBeforeDelete = countryRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeBefore).isEqualTo(databaseSizeBeforeDelete);
 
         // Delete the country
-        restCountryMockMvc.perform(delete("/api/countries/{id}", country.getId())
-            .accept(MediaType.APPLICATION_JSON))
+        restCountryMockMvc
+            .perform(delete(ENTITY_API_URL_ID, country.getId()).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
 
         // Validate the database contains one less item
         List<Country> countryList = countryRepository.findAll();
         assertThat(countryList).hasSize(databaseSizeBeforeDelete - 1);
-
-        // Validate the Country in Elasticsearch
-        verify(mockCountrySearchRepository, times(1)).deleteById(country.getId());
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(countrySearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore - 1);
     }
 
     @Test
     @Transactional
-    public void searchCountry() throws Exception {
-        // Configure the mock search repository
+    void searchCountry() throws Exception {
         // Initialize the database
-        countryService.save(country);
-        when(mockCountrySearchRepository.search(queryStringQuery("id:" + country.getId())))
-            .thenReturn(Collections.singletonList(country));
+        country = countryRepository.saveAndFlush(country);
+        countrySearchRepository.save(country);
 
         // Search the country
-        restCountryMockMvc.perform(get("/api/_search/countries?query=id:" + country.getId()))
+        restCountryMockMvc
+            .perform(get(ENTITY_SEARCH_API_URL + "?query=id:" + country.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(country.getId().intValue())))

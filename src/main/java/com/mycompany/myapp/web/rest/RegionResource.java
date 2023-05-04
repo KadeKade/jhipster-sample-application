@@ -1,24 +1,24 @@
 package com.mycompany.myapp.web.rest;
 
+import static org.elasticsearch.index.query.QueryBuilders.*;
+
 import com.mycompany.myapp.domain.Region;
+import com.mycompany.myapp.repository.RegionRepository;
 import com.mycompany.myapp.service.RegionService;
 import com.mycompany.myapp.web.rest.errors.BadRequestAlertException;
-
-import io.github.jhipster.web.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing {@link com.mycompany.myapp.domain.Region}.
@@ -36,8 +36,11 @@ public class RegionResource {
 
     private final RegionService regionService;
 
-    public RegionResource(RegionService regionService) {
+    private final RegionRepository regionRepository;
+
+    public RegionResource(RegionService regionService, RegionRepository regionRepository) {
         this.regionService = regionService;
+        this.regionRepository = regionRepository;
     }
 
     /**
@@ -54,30 +57,78 @@ public class RegionResource {
             throw new BadRequestAlertException("A new region cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Region result = regionService.save(region);
-        return ResponseEntity.created(new URI("/api/regions/" + result.getId()))
+        return ResponseEntity
+            .created(new URI("/api/regions/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
     /**
-     * {@code PUT  /regions} : Updates an existing region.
+     * {@code PUT  /regions/:id} : Updates an existing region.
      *
+     * @param id the id of the region to save.
      * @param region the region to update.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated region,
      * or with status {@code 400 (Bad Request)} if the region is not valid,
      * or with status {@code 500 (Internal Server Error)} if the region couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PutMapping("/regions")
-    public ResponseEntity<Region> updateRegion(@RequestBody Region region) throws URISyntaxException {
-        log.debug("REST request to update Region : {}", region);
+    @PutMapping("/regions/{id}")
+    public ResponseEntity<Region> updateRegion(@PathVariable(value = "id", required = false) final Long id, @RequestBody Region region)
+        throws URISyntaxException {
+        log.debug("REST request to update Region : {}, {}", id, region);
         if (region.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        Region result = regionService.save(region);
-        return ResponseEntity.ok()
+        if (!Objects.equals(id, region.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!regionRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
+        Region result = regionService.update(region);
+        return ResponseEntity
+            .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, region.getId().toString()))
             .body(result);
+    }
+
+    /**
+     * {@code PATCH  /regions/:id} : Partial updates given fields of an existing region, field will ignore if it is null
+     *
+     * @param id the id of the region to save.
+     * @param region the region to update.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated region,
+     * or with status {@code 400 (Bad Request)} if the region is not valid,
+     * or with status {@code 404 (Not Found)} if the region is not found,
+     * or with status {@code 500 (Internal Server Error)} if the region couldn't be updated.
+     * @throws URISyntaxException if the Location URI syntax is incorrect.
+     */
+    @PatchMapping(value = "/regions/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    public ResponseEntity<Region> partialUpdateRegion(
+        @PathVariable(value = "id", required = false) final Long id,
+        @RequestBody Region region
+    ) throws URISyntaxException {
+        log.debug("REST request to partial update Region partially : {}, {}", id, region);
+        if (region.getId() == null) {
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (!Objects.equals(id, region.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!regionRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
+        Optional<Region> result = regionService.partialUpdate(region);
+
+        return ResponseUtil.wrapOrNotFound(
+            result,
+            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, region.getId().toString())
+        );
     }
 
     /**
@@ -114,7 +165,10 @@ public class RegionResource {
     public ResponseEntity<Void> deleteRegion(@PathVariable Long id) {
         log.debug("REST request to delete Region : {}", id);
         regionService.delete(id);
-        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity
+            .noContent()
+            .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
+            .build();
     }
 
     /**

@@ -1,15 +1,12 @@
 package com.mycompany.myapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-
-import org.springframework.data.elasticsearch.annotations.FieldType;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A Job.
@@ -18,6 +15,7 @@ import java.util.Set;
 @Table(name = "job")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @org.springframework.data.elasticsearch.annotations.Document(indexName = "job")
+@SuppressWarnings("common-java:DuplicatedBlocks")
 public class Job implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -25,6 +23,7 @@ public class Job implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "job_title")
@@ -37,19 +36,24 @@ public class Job implements Serializable {
     private Long maxSalary;
 
     @ManyToMany
+    @JoinTable(name = "rel_job__task", joinColumns = @JoinColumn(name = "job_id"), inverseJoinColumns = @JoinColumn(name = "task_id"))
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    @JoinTable(name = "job_task",
-               joinColumns = @JoinColumn(name = "job_id", referencedColumnName = "id"),
-               inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties(value = { "jobs" }, allowSetters = true)
     private Set<Task> tasks = new HashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties(value = "jobs", allowSetters = true)
+    @JsonIgnoreProperties(value = { "jobs", "manager", "department" }, allowSetters = true)
     private Employee employee;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public Job id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -57,11 +61,11 @@ public class Job implements Serializable {
     }
 
     public String getJobTitle() {
-        return jobTitle;
+        return this.jobTitle;
     }
 
     public Job jobTitle(String jobTitle) {
-        this.jobTitle = jobTitle;
+        this.setJobTitle(jobTitle);
         return this;
     }
 
@@ -70,11 +74,11 @@ public class Job implements Serializable {
     }
 
     public Long getMinSalary() {
-        return minSalary;
+        return this.minSalary;
     }
 
     public Job minSalary(Long minSalary) {
-        this.minSalary = minSalary;
+        this.setMinSalary(minSalary);
         return this;
     }
 
@@ -83,11 +87,11 @@ public class Job implements Serializable {
     }
 
     public Long getMaxSalary() {
-        return maxSalary;
+        return this.maxSalary;
     }
 
     public Job maxSalary(Long maxSalary) {
-        this.maxSalary = maxSalary;
+        this.setMaxSalary(maxSalary);
         return this;
     }
 
@@ -96,11 +100,15 @@ public class Job implements Serializable {
     }
 
     public Set<Task> getTasks() {
-        return tasks;
+        return this.tasks;
+    }
+
+    public void setTasks(Set<Task> tasks) {
+        this.tasks = tasks;
     }
 
     public Job tasks(Set<Task> tasks) {
-        this.tasks = tasks;
+        this.setTasks(tasks);
         return this;
     }
 
@@ -116,22 +124,19 @@ public class Job implements Serializable {
         return this;
     }
 
-    public void setTasks(Set<Task> tasks) {
-        this.tasks = tasks;
-    }
-
     public Employee getEmployee() {
-        return employee;
-    }
-
-    public Job employee(Employee employee) {
-        this.employee = employee;
-        return this;
+        return this.employee;
     }
 
     public void setEmployee(Employee employee) {
         this.employee = employee;
     }
+
+    public Job employee(Employee employee) {
+        this.setEmployee(employee);
+        return this;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -147,7 +152,8 @@ public class Job implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

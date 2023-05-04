@@ -1,0 +1,31 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "criteriaSet": {
+      "home": {
+        "title": "Criteria Sets",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Стварыць новы Criteria Set",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Criteria Set",
+        "search": "Знайсці Criteria Set",
+        "notFound": "No Criteria Sets found"
+      },
+      "created": "Новы Criteria Set створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Criteria Set абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Criteria Set выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Criteria Set {{ id }}?"
+      },
+      "detail": {
+        "title": "Criteria Set"
+      },
+      "id": "ID",
+      "name": "Name",
+      "priority": "Priority",
+      "insurerId": "Insurer Id",
+      "lobId": "Lob Id",
+      "criterias": "Criterias",
+      "automatedAction": "Automated Action",
+      "brokerCategories": "Broker Categories"
+    }
+  }
+}

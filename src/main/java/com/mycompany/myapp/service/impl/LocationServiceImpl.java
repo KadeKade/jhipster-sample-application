@@ -1,21 +1,19 @@
 package com.mycompany.myapp.service.impl;
 
-import com.mycompany.myapp.service.LocationService;
+import static org.elasticsearch.index.query.QueryBuilders.*;
+
 import com.mycompany.myapp.domain.Location;
 import com.mycompany.myapp.repository.LocationRepository;
 import com.mycompany.myapp.repository.search.LocationSearchRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.mycompany.myapp.service.LocationService;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service Implementation for managing {@link Location}.
@@ -39,8 +37,46 @@ public class LocationServiceImpl implements LocationService {
     public Location save(Location location) {
         log.debug("Request to save Location : {}", location);
         Location result = locationRepository.save(location);
-        locationSearchRepository.save(result);
+        locationSearchRepository.index(result);
         return result;
+    }
+
+    @Override
+    public Location update(Location location) {
+        log.debug("Request to update Location : {}", location);
+        Location result = locationRepository.save(location);
+        locationSearchRepository.index(result);
+        return result;
+    }
+
+    @Override
+    public Optional<Location> partialUpdate(Location location) {
+        log.debug("Request to partially update Location : {}", location);
+
+        return locationRepository
+            .findById(location.getId())
+            .map(existingLocation -> {
+                if (location.getStreetAddress() != null) {
+                    existingLocation.setStreetAddress(location.getStreetAddress());
+                }
+                if (location.getPostalCode() != null) {
+                    existingLocation.setPostalCode(location.getPostalCode());
+                }
+                if (location.getCity() != null) {
+                    existingLocation.setCity(location.getCity());
+                }
+                if (location.getStateProvince() != null) {
+                    existingLocation.setStateProvince(location.getStateProvince());
+                }
+
+                return existingLocation;
+            })
+            .map(locationRepository::save)
+            .map(savedLocation -> {
+                locationSearchRepository.save(savedLocation);
+
+                return savedLocation;
+            });
     }
 
     @Override
@@ -49,7 +85,6 @@ public class LocationServiceImpl implements LocationService {
         log.debug("Request to get all Locations");
         return locationRepository.findAll();
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -69,8 +104,6 @@ public class LocationServiceImpl implements LocationService {
     @Transactional(readOnly = true)
     public List<Location> search(String query) {
         log.debug("Request to search Locations for query {}", query);
-        return StreamSupport
-            .stream(locationSearchRepository.search(queryStringQuery(query)).spliterator(), false)
-        .collect(Collectors.toList());
+        return StreamSupport.stream(locationSearchRepository.search(query).spliterator(), false).collect(Collectors.toList());
     }
 }

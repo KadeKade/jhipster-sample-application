@@ -1,24 +1,24 @@
 package com.mycompany.myapp.web.rest;
 
+import static org.elasticsearch.index.query.QueryBuilders.*;
+
 import com.mycompany.myapp.domain.Country;
+import com.mycompany.myapp.repository.CountryRepository;
 import com.mycompany.myapp.service.CountryService;
 import com.mycompany.myapp.web.rest.errors.BadRequestAlertException;
-
-import io.github.jhipster.web.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing {@link com.mycompany.myapp.domain.Country}.
@@ -36,8 +36,11 @@ public class CountryResource {
 
     private final CountryService countryService;
 
-    public CountryResource(CountryService countryService) {
+    private final CountryRepository countryRepository;
+
+    public CountryResource(CountryService countryService, CountryRepository countryRepository) {
         this.countryService = countryService;
+        this.countryRepository = countryRepository;
     }
 
     /**
@@ -54,30 +57,78 @@ public class CountryResource {
             throw new BadRequestAlertException("A new country cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Country result = countryService.save(country);
-        return ResponseEntity.created(new URI("/api/countries/" + result.getId()))
+        return ResponseEntity
+            .created(new URI("/api/countries/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
     /**
-     * {@code PUT  /countries} : Updates an existing country.
+     * {@code PUT  /countries/:id} : Updates an existing country.
      *
+     * @param id the id of the country to save.
      * @param country the country to update.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated country,
      * or with status {@code 400 (Bad Request)} if the country is not valid,
      * or with status {@code 500 (Internal Server Error)} if the country couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PutMapping("/countries")
-    public ResponseEntity<Country> updateCountry(@RequestBody Country country) throws URISyntaxException {
-        log.debug("REST request to update Country : {}", country);
+    @PutMapping("/countries/{id}")
+    public ResponseEntity<Country> updateCountry(@PathVariable(value = "id", required = false) final Long id, @RequestBody Country country)
+        throws URISyntaxException {
+        log.debug("REST request to update Country : {}, {}", id, country);
         if (country.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        Country result = countryService.save(country);
-        return ResponseEntity.ok()
+        if (!Objects.equals(id, country.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!countryRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
+        Country result = countryService.update(country);
+        return ResponseEntity
+            .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, country.getId().toString()))
             .body(result);
+    }
+
+    /**
+     * {@code PATCH  /countries/:id} : Partial updates given fields of an existing country, field will ignore if it is null
+     *
+     * @param id the id of the country to save.
+     * @param country the country to update.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated country,
+     * or with status {@code 400 (Bad Request)} if the country is not valid,
+     * or with status {@code 404 (Not Found)} if the country is not found,
+     * or with status {@code 500 (Internal Server Error)} if the country couldn't be updated.
+     * @throws URISyntaxException if the Location URI syntax is incorrect.
+     */
+    @PatchMapping(value = "/countries/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    public ResponseEntity<Country> partialUpdateCountry(
+        @PathVariable(value = "id", required = false) final Long id,
+        @RequestBody Country country
+    ) throws URISyntaxException {
+        log.debug("REST request to partial update Country partially : {}, {}", id, country);
+        if (country.getId() == null) {
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (!Objects.equals(id, country.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!countryRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
+        Optional<Country> result = countryService.partialUpdate(country);
+
+        return ResponseUtil.wrapOrNotFound(
+            result,
+            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, country.getId().toString())
+        );
     }
 
     /**
@@ -114,7 +165,10 @@ public class CountryResource {
     public ResponseEntity<Void> deleteCountry(@PathVariable Long id) {
         log.debug("REST request to delete Country : {}", id);
         countryService.delete(id);
-        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity
+            .noContent()
+            .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
+            .build();
     }
 
     /**
