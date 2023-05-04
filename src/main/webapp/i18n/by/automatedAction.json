@@ -1,0 +1,31 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "automatedAction": {
+      "home": {
+        "title": "Automated Actions",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Стварыць новы Automated Action",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Automated Action",
+        "search": "Знайсці Automated Action",
+        "notFound": "No Automated Actions found"
+      },
+      "created": "Новы Automated Action створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Automated Action абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Automated Action выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Automated Action {{ id }}?"
+      },
+      "detail": {
+        "title": "Automated Action"
+      },
+      "id": "ID",
+      "type": "Type",
+      "positiveActionDefinition": "Positive Action Definition",
+      "negativeActionDefinition": "Negative Action Definition",
+      "displayNameDe": "Display Name De",
+      "displayNameEn": "Display Name En",
+      "displayNameFr": "Display Name Fr",
+      "displayNameIt": "Display Name It"
+    }
+  }
+}

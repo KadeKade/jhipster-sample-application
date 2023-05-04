@@ -1,59 +1,58 @@
 package com.mycompany.myapp.web.rest;
 
-import com.mycompany.myapp.JhipsterSampleApplicationApp;
-import com.mycompany.myapp.domain.Region;
-import com.mycompany.myapp.repository.RegionRepository;
-import com.mycompany.myapp.repository.search.RegionSearchRepository;
-import com.mycompany.myapp.service.RegionService;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-import javax.persistence.EntityManager;
-import java.util.Collections;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.mycompany.myapp.IntegrationTest;
+import com.mycompany.myapp.domain.Region;
+import com.mycompany.myapp.repository.RegionRepository;
+import com.mycompany.myapp.repository.search.RegionSearchRepository;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
+import javax.persistence.EntityManager;
+import org.apache.commons.collections4.IterableUtils;
+import org.assertj.core.util.IterableUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Integration tests for the {@link RegionResource} REST controller.
  */
-@SpringBootTest(classes = JhipsterSampleApplicationApp.class)
-@ExtendWith(MockitoExtension.class)
+@IntegrationTest
 @AutoConfigureMockMvc
 @WithMockUser
-public class RegionResourceIT {
+class RegionResourceIT {
 
     private static final String DEFAULT_REGION_NAME = "AAAAAAAAAA";
     private static final String UPDATED_REGION_NAME = "BBBBBBBBBB";
+
+    private static final String ENTITY_API_URL = "/api/regions";
+    private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
+    private static final String ENTITY_SEARCH_API_URL = "/api/_search/regions";
+
+    private static Random random = new Random();
+    private static AtomicLong count = new AtomicLong(random.nextInt() + (2 * Integer.MAX_VALUE));
 
     @Autowired
     private RegionRepository regionRepository;
 
     @Autowired
-    private RegionService regionService;
-
-    /**
-     * This repository is mocked in the com.mycompany.myapp.repository.search test package.
-     *
-     * @see com.mycompany.myapp.repository.search.RegionSearchRepositoryMockConfiguration
-     */
-    @Autowired
-    private RegionSearchRepository mockRegionSearchRepository;
+    private RegionSearchRepository regionSearchRepository;
 
     @Autowired
     private EntityManager em;
@@ -70,10 +69,10 @@ public class RegionResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static Region createEntity(EntityManager em) {
-        Region region = new Region()
-            .regionName(DEFAULT_REGION_NAME);
+        Region region = new Region().regionName(DEFAULT_REGION_NAME);
         return region;
     }
+
     /**
      * Create an updated entity for this test.
      *
@@ -81,9 +80,14 @@ public class RegionResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static Region createUpdatedEntity(EntityManager em) {
-        Region region = new Region()
-            .regionName(UPDATED_REGION_NAME);
+        Region region = new Region().regionName(UPDATED_REGION_NAME);
         return region;
+    }
+
+    @AfterEach
+    public void cleanupElasticSearchRepository() {
+        regionSearchRepository.deleteAll();
+        assertThat(regionSearchRepository.count()).isEqualTo(0);
     }
 
     @BeforeEach
@@ -93,100 +97,107 @@ public class RegionResourceIT {
 
     @Test
     @Transactional
-    public void createRegion() throws Exception {
+    void createRegion() throws Exception {
         int databaseSizeBeforeCreate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
         // Create the Region
-        restRegionMockMvc.perform(post("/api/regions")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(region)))
+        restRegionMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(region)))
             .andExpect(status().isCreated());
 
         // Validate the Region in the database
         List<Region> regionList = regionRepository.findAll();
         assertThat(regionList).hasSize(databaseSizeBeforeCreate + 1);
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+                assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore + 1);
+            });
         Region testRegion = regionList.get(regionList.size() - 1);
         assertThat(testRegion.getRegionName()).isEqualTo(DEFAULT_REGION_NAME);
-
-        // Validate the Region in Elasticsearch
-        verify(mockRegionSearchRepository, times(1)).save(testRegion);
     }
 
     @Test
     @Transactional
-    public void createRegionWithExistingId() throws Exception {
-        int databaseSizeBeforeCreate = regionRepository.findAll().size();
-
+    void createRegionWithExistingId() throws Exception {
         // Create the Region with an existing ID
         region.setId(1L);
 
+        int databaseSizeBeforeCreate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+
         // An entity with an existing ID cannot be created, so this API call must fail
-        restRegionMockMvc.perform(post("/api/regions")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(region)))
+        restRegionMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(region)))
             .andExpect(status().isBadRequest());
 
         // Validate the Region in the database
         List<Region> regionList = regionRepository.findAll();
         assertThat(regionList).hasSize(databaseSizeBeforeCreate);
-
-        // Validate the Region in Elasticsearch
-        verify(mockRegionSearchRepository, times(0)).save(region);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
     }
-
 
     @Test
     @Transactional
-    public void getAllRegions() throws Exception {
+    void getAllRegions() throws Exception {
         // Initialize the database
         regionRepository.saveAndFlush(region);
 
         // Get all the regionList
-        restRegionMockMvc.perform(get("/api/regions?sort=id,desc"))
+        restRegionMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(region.getId().intValue())))
             .andExpect(jsonPath("$.[*].regionName").value(hasItem(DEFAULT_REGION_NAME)));
     }
-    
+
     @Test
     @Transactional
-    public void getRegion() throws Exception {
+    void getRegion() throws Exception {
         // Initialize the database
         regionRepository.saveAndFlush(region);
 
         // Get the region
-        restRegionMockMvc.perform(get("/api/regions/{id}", region.getId()))
+        restRegionMockMvc
+            .perform(get(ENTITY_API_URL_ID, region.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.id").value(region.getId().intValue()))
             .andExpect(jsonPath("$.regionName").value(DEFAULT_REGION_NAME));
     }
+
     @Test
     @Transactional
-    public void getNonExistingRegion() throws Exception {
+    void getNonExistingRegion() throws Exception {
         // Get the region
-        restRegionMockMvc.perform(get("/api/regions/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+        restRegionMockMvc.perform(get(ENTITY_API_URL_ID, Long.MAX_VALUE)).andExpect(status().isNotFound());
     }
 
     @Test
     @Transactional
-    public void updateRegion() throws Exception {
+    void putExistingRegion() throws Exception {
         // Initialize the database
-        regionService.save(region);
+        regionRepository.saveAndFlush(region);
 
         int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+        regionSearchRepository.save(region);
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
 
         // Update the region
         Region updatedRegion = regionRepository.findById(region.getId()).get();
         // Disconnect from session so that the updates on updatedRegion are not directly saved in db
         em.detach(updatedRegion);
-        updatedRegion
-            .regionName(UPDATED_REGION_NAME);
+        updatedRegion.regionName(UPDATED_REGION_NAME);
 
-        restRegionMockMvc.perform(put("/api/regions")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(updatedRegion)))
+        restRegionMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, updatedRegion.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(updatedRegion))
+            )
             .andExpect(status().isOk());
 
         // Validate the Region in the database
@@ -194,62 +205,239 @@ public class RegionResourceIT {
         assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
         Region testRegion = regionList.get(regionList.size() - 1);
         assertThat(testRegion.getRegionName()).isEqualTo(UPDATED_REGION_NAME);
-
-        // Validate the Region in Elasticsearch
-        verify(mockRegionSearchRepository, times(2)).save(testRegion);
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+                assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+                List<Region> regionSearchList = IterableUtils.toList(regionSearchRepository.findAll());
+                Region testRegionSearch = regionSearchList.get(searchDatabaseSizeAfter - 1);
+                assertThat(testRegionSearch.getRegionName()).isEqualTo(UPDATED_REGION_NAME);
+            });
     }
 
     @Test
     @Transactional
-    public void updateNonExistingRegion() throws Exception {
+    void putNonExistingRegion() throws Exception {
         int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        region.setId(count.incrementAndGet());
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restRegionMockMvc.perform(put("/api/regions")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(region)))
+        restRegionMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, region.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(region))
+            )
             .andExpect(status().isBadRequest());
 
         // Validate the Region in the database
         List<Region> regionList = regionRepository.findAll();
         assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
-
-        // Validate the Region in Elasticsearch
-        verify(mockRegionSearchRepository, times(0)).save(region);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
     }
 
     @Test
     @Transactional
-    public void deleteRegion() throws Exception {
+    void putWithIdMismatchRegion() throws Exception {
+        int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        region.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restRegionMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, count.incrementAndGet())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(region))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Region in the database
+        List<Region> regionList = regionRepository.findAll();
+        assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void putWithMissingIdPathParamRegion() throws Exception {
+        int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        region.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restRegionMockMvc
+            .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(region)))
+            .andExpect(status().isMethodNotAllowed());
+
+        // Validate the Region in the database
+        List<Region> regionList = regionRepository.findAll();
+        assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void partialUpdateRegionWithPatch() throws Exception {
         // Initialize the database
-        regionService.save(region);
+        regionRepository.saveAndFlush(region);
+
+        int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+
+        // Update the region using partial update
+        Region partialUpdatedRegion = new Region();
+        partialUpdatedRegion.setId(region.getId());
+
+        partialUpdatedRegion.regionName(UPDATED_REGION_NAME);
+
+        restRegionMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, partialUpdatedRegion.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedRegion))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the Region in the database
+        List<Region> regionList = regionRepository.findAll();
+        assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
+        Region testRegion = regionList.get(regionList.size() - 1);
+        assertThat(testRegion.getRegionName()).isEqualTo(UPDATED_REGION_NAME);
+    }
+
+    @Test
+    @Transactional
+    void fullUpdateRegionWithPatch() throws Exception {
+        // Initialize the database
+        regionRepository.saveAndFlush(region);
+
+        int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+
+        // Update the region using partial update
+        Region partialUpdatedRegion = new Region();
+        partialUpdatedRegion.setId(region.getId());
+
+        partialUpdatedRegion.regionName(UPDATED_REGION_NAME);
+
+        restRegionMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, partialUpdatedRegion.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedRegion))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the Region in the database
+        List<Region> regionList = regionRepository.findAll();
+        assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
+        Region testRegion = regionList.get(regionList.size() - 1);
+        assertThat(testRegion.getRegionName()).isEqualTo(UPDATED_REGION_NAME);
+    }
+
+    @Test
+    @Transactional
+    void patchNonExistingRegion() throws Exception {
+        int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        region.setId(count.incrementAndGet());
+
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
+        restRegionMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, region.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(region))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Region in the database
+        List<Region> regionList = regionRepository.findAll();
+        assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void patchWithIdMismatchRegion() throws Exception {
+        int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        region.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restRegionMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, count.incrementAndGet())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(region))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Region in the database
+        List<Region> regionList = regionRepository.findAll();
+        assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void patchWithMissingIdPathParamRegion() throws Exception {
+        int databaseSizeBeforeUpdate = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        region.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restRegionMockMvc
+            .perform(patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(region)))
+            .andExpect(status().isMethodNotAllowed());
+
+        // Validate the Region in the database
+        List<Region> regionList = regionRepository.findAll();
+        assertThat(regionList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void deleteRegion() throws Exception {
+        // Initialize the database
+        regionRepository.saveAndFlush(region);
+        regionRepository.save(region);
+        regionSearchRepository.save(region);
 
         int databaseSizeBeforeDelete = regionRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeBefore).isEqualTo(databaseSizeBeforeDelete);
 
         // Delete the region
-        restRegionMockMvc.perform(delete("/api/regions/{id}", region.getId())
-            .accept(MediaType.APPLICATION_JSON))
+        restRegionMockMvc
+            .perform(delete(ENTITY_API_URL_ID, region.getId()).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
 
         // Validate the database contains one less item
         List<Region> regionList = regionRepository.findAll();
         assertThat(regionList).hasSize(databaseSizeBeforeDelete - 1);
-
-        // Validate the Region in Elasticsearch
-        verify(mockRegionSearchRepository, times(1)).deleteById(region.getId());
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(regionSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore - 1);
     }
 
     @Test
     @Transactional
-    public void searchRegion() throws Exception {
-        // Configure the mock search repository
+    void searchRegion() throws Exception {
         // Initialize the database
-        regionService.save(region);
-        when(mockRegionSearchRepository.search(queryStringQuery("id:" + region.getId())))
-            .thenReturn(Collections.singletonList(region));
+        region = regionRepository.saveAndFlush(region);
+        regionSearchRepository.save(region);
 
         // Search the region
-        restRegionMockMvc.perform(get("/api/_search/regions?query=id:" + region.getId()))
+        restRegionMockMvc
+            .perform(get(ENTITY_SEARCH_API_URL + "?query=id:" + region.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(region.getId().intValue())))

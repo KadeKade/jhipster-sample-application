@@ -3,10 +3,11 @@
     "task": {
       "home": {
         "title": "Tasks",
+        "refreshListLabel": "Обновить список",
         "createLabel": "Создать новый Task",
         "createOrEditLabel": "Создать или отредактировать Task",
         "search": "Найти Task",
-        "notFound": "No Tasks found"
+        "notFound": "Tasks не найдено"
       },
       "created": "Новый Task создан с идентификатором {{ param }}",
       "updated": "Task обновлен с идентификатором {{ param }}",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Task"
       },
+      "id": "ID",
       "title": "Title",
       "description": "Description",
       "job": "Job"

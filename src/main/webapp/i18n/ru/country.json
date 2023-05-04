@@ -3,10 +3,11 @@
     "country": {
       "home": {
         "title": "Countries",
+        "refreshListLabel": "Обновить список",
         "createLabel": "Создать новый Country",
         "createOrEditLabel": "Создать или отредактировать Country",
         "search": "Найти Country",
-        "notFound": "No Countries found"
+        "notFound": "Countries не найдено"
       },
       "created": "Новый Country создан с идентификатором {{ param }}",
       "updated": "Country обновлен с идентификатором {{ param }}",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Country"
       },
+      "id": "ID",
       "countryName": "Country Name",
       "region": "Region"
     }

@@ -3,6 +3,7 @@
     "task": {
       "home": {
         "title": "Tasks",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Стварыць новы Task",
         "createOrEditLabel": "Стварыць або адрэдагаваць Task",
         "search": "Знайсці Task",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Task"
       },
+      "id": "ID",
       "title": "Title",
       "description": "Description",
       "job": "Job"

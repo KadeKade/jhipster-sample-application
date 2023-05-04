@@ -1,40 +1,38 @@
 {
-  "name": "Department",
+  "applications": "*",
+  "changelogDate": "20200830205617",
+  "clientRootFolder": "",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "department",
   "fields": [
     {
       "fieldName": "departmentName",
       "fieldType": "String",
-      "fieldValidateRules": [
-        "required"
-      ]
+      "fieldValidateRules": ["required"]
     }
   ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "Department",
+  "pagination": "no",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "one-to-one",
+      "otherEntityField": "id",
       "otherEntityName": "location",
       "otherEntityRelationshipName": "department",
+      "ownerSide": true,
       "relationshipName": "location",
-      "otherEntityField": "id",
-      "ownerSide": true
+      "relationshipType": "one-to-one"
     },
     {
-      "relationshipType": "one-to-many",
+      "javadoc": "A relationship",
       "otherEntityName": "employee",
       "otherEntityRelationshipName": "department",
-      "javadoc": "A relationship",
-      "relationshipName": "employee"
+      "relationshipName": "employee",
+      "relationshipType": "one-to-many"
     }
   ],
-  "changelogDate": "20200830205617",
-  "entityTableName": "department",
-  "dto": "no",
-  "pagination": "no",
-  "service": "serviceImpl",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": "*"
+  "service": "serviceImpl"
 }

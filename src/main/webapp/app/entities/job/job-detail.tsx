@@ -1,30 +1,37 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Button, Row, Col } from 'reactstrap';
-import { Translate, ICrudGetAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getEntity } from './job.reducer';
-import { IJob } from 'app/shared/model/job.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IJobDetailProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+import { getEntity } from './job.reducer';
 
-export const JobDetail = (props: IJobDetailProps) => {
+export const JobDetail = () => {
+  const dispatch = useAppDispatch();
+
+  const { id } = useParams<'id'>();
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
   }, []);
 
-  const { jobEntity } = props;
+  const jobEntity = useAppSelector(state => state.job.entity);
   return (
     <Row>
       <Col md="8">
-        <h2>
-          <Translate contentKey="jhipsterSampleApplicationApp.job.detail.title">Job</Translate> [<b>{jobEntity.id}</b>]
+        <h2 data-cy="jobDetailsHeading">
+          <Translate contentKey="jhipsterSampleApplicationApp.job.detail.title">Job</Translate>
         </h2>
         <dl className="jh-entity-details">
+          <dt>
+            <span id="id">
+              <Translate contentKey="global.field.id">ID</Translate>
+            </span>
+          </dt>
+          <dd>{jobEntity.id}</dd>
           <dt>
             <span id="jobTitle">
               <Translate contentKey="jhipsterSampleApplicationApp.job.jobTitle">Job Title</Translate>
@@ -61,7 +68,7 @@ export const JobDetail = (props: IJobDetailProps) => {
           </dt>
           <dd>{jobEntity.employee ? jobEntity.employee.id : ''}</dd>
         </dl>
-        <Button tag={Link} to="/job" replace color="info">
+        <Button tag={Link} to="/job" replace color="info" data-cy="entityDetailsBackButton">
           <FontAwesomeIcon icon="arrow-left" />{' '}
           <span className="d-none d-md-inline">
             <Translate contentKey="entity.action.back">Back</Translate>
@@ -79,13 +86,4 @@ export const JobDetail = (props: IJobDetailProps) => {
   );
 };
 
-const mapStateToProps = ({ job }: IRootState) => ({
-  jobEntity: job.entity,
-});
-
-const mapDispatchToProps = { getEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(JobDetail);
+export default JobDetail;

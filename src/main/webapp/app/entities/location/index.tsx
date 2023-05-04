@@ -1,23 +1,23 @@
 import React from 'react';
-import { Switch } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 
-import ErrorBoundaryRoute from 'app/shared/error/error-boundary-route';
+import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 
 import Location from './location';
 import LocationDetail from './location-detail';
 import LocationUpdate from './location-update';
 import LocationDeleteDialog from './location-delete-dialog';
 
-const Routes = ({ match }) => (
-  <>
-    <Switch>
-      <ErrorBoundaryRoute exact path={`${match.url}/new`} component={LocationUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id/edit`} component={LocationUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id`} component={LocationDetail} />
-      <ErrorBoundaryRoute path={match.url} component={Location} />
-    </Switch>
-    <ErrorBoundaryRoute exact path={`${match.url}/:id/delete`} component={LocationDeleteDialog} />
-  </>
+const LocationRoutes = () => (
+  <ErrorBoundaryRoutes>
+    <Route index element={<Location />} />
+    <Route path="new" element={<LocationUpdate />} />
+    <Route path=":id">
+      <Route index element={<LocationDetail />} />
+      <Route path="edit" element={<LocationUpdate />} />
+      <Route path="delete" element={<LocationDeleteDialog />} />
+    </Route>
+  </ErrorBoundaryRoutes>
 );
 
-export default Routes;
+export default LocationRoutes;

@@ -1,21 +1,19 @@
 package com.mycompany.myapp.service.impl;
 
-import com.mycompany.myapp.service.RegionService;
+import static org.elasticsearch.index.query.QueryBuilders.*;
+
 import com.mycompany.myapp.domain.Region;
 import com.mycompany.myapp.repository.RegionRepository;
 import com.mycompany.myapp.repository.search.RegionSearchRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.mycompany.myapp.service.RegionService;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service Implementation for managing {@link Region}.
@@ -39,8 +37,37 @@ public class RegionServiceImpl implements RegionService {
     public Region save(Region region) {
         log.debug("Request to save Region : {}", region);
         Region result = regionRepository.save(region);
-        regionSearchRepository.save(result);
+        regionSearchRepository.index(result);
         return result;
+    }
+
+    @Override
+    public Region update(Region region) {
+        log.debug("Request to update Region : {}", region);
+        Region result = regionRepository.save(region);
+        regionSearchRepository.index(result);
+        return result;
+    }
+
+    @Override
+    public Optional<Region> partialUpdate(Region region) {
+        log.debug("Request to partially update Region : {}", region);
+
+        return regionRepository
+            .findById(region.getId())
+            .map(existingRegion -> {
+                if (region.getRegionName() != null) {
+                    existingRegion.setRegionName(region.getRegionName());
+                }
+
+                return existingRegion;
+            })
+            .map(regionRepository::save)
+            .map(savedRegion -> {
+                regionSearchRepository.save(savedRegion);
+
+                return savedRegion;
+            });
     }
 
     @Override
@@ -49,7 +76,6 @@ public class RegionServiceImpl implements RegionService {
         log.debug("Request to get all Regions");
         return regionRepository.findAll();
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -69,8 +95,6 @@ public class RegionServiceImpl implements RegionService {
     @Transactional(readOnly = true)
     public List<Region> search(String query) {
         log.debug("Request to search Regions for query {}", query);
-        return StreamSupport
-            .stream(regionSearchRepository.search(queryStringQuery(query)).spliterator(), false)
-        .collect(Collectors.toList());
+        return StreamSupport.stream(regionSearchRepository.search(query).spliterator(), false).collect(Collectors.toList());
     }
 }

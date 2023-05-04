@@ -1,0 +1,26 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "brokerCategory": {
+      "home": {
+        "title": "Broker Categories",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Broker Category",
+        "createOrEditLabel": "Create or edit a Broker Category",
+        "search": "Search for Broker Category",
+        "notFound": "No Broker Categories found"
+      },
+      "created": "A new Broker Category is created with identifier {{ param }}",
+      "updated": "A Broker Category is updated with identifier {{ param }}",
+      "deleted": "A Broker Category is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Broker Category {{ id }}?"
+      },
+      "detail": {
+        "title": "Broker Category"
+      },
+      "id": "ID",
+      "displayName": "Display Name",
+      "criteriaSets": "Criteria Sets"
+    }
+  }
+}

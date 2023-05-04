@@ -3,6 +3,7 @@
     "department": {
       "home": {
         "title": "Departments",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Стварыць новы Department",
         "createOrEditLabel": "Стварыць або адрэдагаваць Department",
         "search": "Знайсці Department",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Department"
       },
+      "id": "ID",
       "departmentName": "Department Name",
       "location": "Location",
       "employee": "Employee"

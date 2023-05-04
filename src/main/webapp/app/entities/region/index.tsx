@@ -1,23 +1,23 @@
 import React from 'react';
-import { Switch } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 
-import ErrorBoundaryRoute from 'app/shared/error/error-boundary-route';
+import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 
 import Region from './region';
 import RegionDetail from './region-detail';
 import RegionUpdate from './region-update';
 import RegionDeleteDialog from './region-delete-dialog';
 
-const Routes = ({ match }) => (
-  <>
-    <Switch>
-      <ErrorBoundaryRoute exact path={`${match.url}/new`} component={RegionUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id/edit`} component={RegionUpdate} />
-      <ErrorBoundaryRoute exact path={`${match.url}/:id`} component={RegionDetail} />
-      <ErrorBoundaryRoute path={match.url} component={Region} />
-    </Switch>
-    <ErrorBoundaryRoute exact path={`${match.url}/:id/delete`} component={RegionDeleteDialog} />
-  </>
+const RegionRoutes = () => (
+  <ErrorBoundaryRoutes>
+    <Route index element={<Region />} />
+    <Route path="new" element={<RegionUpdate />} />
+    <Route path=":id">
+      <Route index element={<RegionDetail />} />
+      <Route path="edit" element={<RegionUpdate />} />
+      <Route path="delete" element={<RegionDeleteDialog />} />
+    </Route>
+  </ErrorBoundaryRoutes>
 );
 
-export default Routes;
+export default RegionRoutes;

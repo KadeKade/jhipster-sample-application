@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!--
+        Added the constraints for entity Criteria.
+    -->
+    <changeSet id="20230504080116-2" author="jhipster">
+
+        <addForeignKeyConstraint baseColumnNames="criteria_id"
+                                 baseTableName="rel_criteria__action_parameters"
+                                 constraintName="fk_rel_criteria__action_parameters__criteria_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="criteria"/>
+
+        <addForeignKeyConstraint baseColumnNames="action_parameters_id"
+                                 baseTableName="rel_criteria__action_parameters"
+                                 constraintName="fk_rel_criteria__action_parameters__action_parameters_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="action_parameter"/>
+
+        <addForeignKeyConstraint baseColumnNames="criteria_set_id"
+                                 baseTableName="criteria"
+                                 constraintName="fk_criteria__criteria_set_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="criteria_set"/>
+    </changeSet>
+</databaseChangeLog>

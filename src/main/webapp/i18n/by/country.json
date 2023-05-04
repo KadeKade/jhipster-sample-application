@@ -3,6 +3,7 @@
     "country": {
       "home": {
         "title": "Countries",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Стварыць новы Country",
         "createOrEditLabel": "Стварыць або адрэдагаваць Country",
         "search": "Знайсці Country",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Country"
       },
+      "id": "ID",
       "countryName": "Country Name",
       "region": "Region"
     }

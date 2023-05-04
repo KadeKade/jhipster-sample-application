@@ -1,0 +1,9 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "CriteriaType": {
+      "null": "",
+      "POSITIVE": "POSITIVE",
+      "NEGATIVE": "NEGATIVE"
+    }
+  }
+}

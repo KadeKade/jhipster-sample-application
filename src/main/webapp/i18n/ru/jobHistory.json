@@ -3,10 +3,11 @@
     "jobHistory": {
       "home": {
         "title": "Job Histories",
+        "refreshListLabel": "Обновить список",
         "createLabel": "Создать новый Job History",
         "createOrEditLabel": "Создать или отредактировать Job History",
         "search": "Найти Job History",
-        "notFound": "No Job Histories found"
+        "notFound": "Job Histories не найдено"
       },
       "created": "Новый Job History создан с идентификатором {{ param }}",
       "updated": "Job History обновлен с идентификатором {{ param }}",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Job History"
       },
+      "id": "ID",
       "startDate": "Start Date",
       "endDate": "End Date",
       "language": "Language",

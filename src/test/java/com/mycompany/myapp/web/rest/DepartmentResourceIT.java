@@ -1,59 +1,58 @@
 package com.mycompany.myapp.web.rest;
 
-import com.mycompany.myapp.JhipsterSampleApplicationApp;
-import com.mycompany.myapp.domain.Department;
-import com.mycompany.myapp.repository.DepartmentRepository;
-import com.mycompany.myapp.repository.search.DepartmentSearchRepository;
-import com.mycompany.myapp.service.DepartmentService;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-import javax.persistence.EntityManager;
-import java.util.Collections;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.mycompany.myapp.IntegrationTest;
+import com.mycompany.myapp.domain.Department;
+import com.mycompany.myapp.repository.DepartmentRepository;
+import com.mycompany.myapp.repository.search.DepartmentSearchRepository;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
+import javax.persistence.EntityManager;
+import org.apache.commons.collections4.IterableUtils;
+import org.assertj.core.util.IterableUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * Integration tests for the {@link DepartmentResource} REST controller.
  */
-@SpringBootTest(classes = JhipsterSampleApplicationApp.class)
-@ExtendWith(MockitoExtension.class)
+@IntegrationTest
 @AutoConfigureMockMvc
 @WithMockUser
-public class DepartmentResourceIT {
+class DepartmentResourceIT {
 
     private static final String DEFAULT_DEPARTMENT_NAME = "AAAAAAAAAA";
     private static final String UPDATED_DEPARTMENT_NAME = "BBBBBBBBBB";
+
+    private static final String ENTITY_API_URL = "/api/departments";
+    private static final String ENTITY_API_URL_ID = ENTITY_API_URL + "/{id}";
+    private static final String ENTITY_SEARCH_API_URL = "/api/_search/departments";
+
+    private static Random random = new Random();
+    private static AtomicLong count = new AtomicLong(random.nextInt() + (2 * Integer.MAX_VALUE));
 
     @Autowired
     private DepartmentRepository departmentRepository;
 
     @Autowired
-    private DepartmentService departmentService;
-
-    /**
-     * This repository is mocked in the com.mycompany.myapp.repository.search test package.
-     *
-     * @see com.mycompany.myapp.repository.search.DepartmentSearchRepositoryMockConfiguration
-     */
-    @Autowired
-    private DepartmentSearchRepository mockDepartmentSearchRepository;
+    private DepartmentSearchRepository departmentSearchRepository;
 
     @Autowired
     private EntityManager em;
@@ -70,10 +69,10 @@ public class DepartmentResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static Department createEntity(EntityManager em) {
-        Department department = new Department()
-            .departmentName(DEFAULT_DEPARTMENT_NAME);
+        Department department = new Department().departmentName(DEFAULT_DEPARTMENT_NAME);
         return department;
     }
+
     /**
      * Create an updated entity for this test.
      *
@@ -81,9 +80,14 @@ public class DepartmentResourceIT {
      * if they test an entity which requires the current entity.
      */
     public static Department createUpdatedEntity(EntityManager em) {
-        Department department = new Department()
-            .departmentName(UPDATED_DEPARTMENT_NAME);
+        Department department = new Department().departmentName(UPDATED_DEPARTMENT_NAME);
         return department;
+    }
+
+    @AfterEach
+    public void cleanupElasticSearchRepository() {
+        departmentSearchRepository.deleteAll();
+        assertThat(departmentSearchRepository.count()).isEqualTo(0);
     }
 
     @BeforeEach
@@ -93,119 +97,127 @@ public class DepartmentResourceIT {
 
     @Test
     @Transactional
-    public void createDepartment() throws Exception {
+    void createDepartment() throws Exception {
         int databaseSizeBeforeCreate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
         // Create the Department
-        restDepartmentMockMvc.perform(post("/api/departments")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(department)))
+        restDepartmentMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(department)))
             .andExpect(status().isCreated());
 
         // Validate the Department in the database
         List<Department> departmentList = departmentRepository.findAll();
         assertThat(departmentList).hasSize(databaseSizeBeforeCreate + 1);
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+                assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore + 1);
+            });
         Department testDepartment = departmentList.get(departmentList.size() - 1);
         assertThat(testDepartment.getDepartmentName()).isEqualTo(DEFAULT_DEPARTMENT_NAME);
-
-        // Validate the Department in Elasticsearch
-        verify(mockDepartmentSearchRepository, times(1)).save(testDepartment);
     }
 
     @Test
     @Transactional
-    public void createDepartmentWithExistingId() throws Exception {
-        int databaseSizeBeforeCreate = departmentRepository.findAll().size();
-
+    void createDepartmentWithExistingId() throws Exception {
         // Create the Department with an existing ID
         department.setId(1L);
 
+        int databaseSizeBeforeCreate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+
         // An entity with an existing ID cannot be created, so this API call must fail
-        restDepartmentMockMvc.perform(post("/api/departments")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(department)))
+        restDepartmentMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(department)))
             .andExpect(status().isBadRequest());
 
         // Validate the Department in the database
         List<Department> departmentList = departmentRepository.findAll();
         assertThat(departmentList).hasSize(databaseSizeBeforeCreate);
-
-        // Validate the Department in Elasticsearch
-        verify(mockDepartmentSearchRepository, times(0)).save(department);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
     }
-
 
     @Test
     @Transactional
-    public void checkDepartmentNameIsRequired() throws Exception {
+    void checkDepartmentNameIsRequired() throws Exception {
         int databaseSizeBeforeTest = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
         // set the field null
         department.setDepartmentName(null);
 
         // Create the Department, which fails.
 
-
-        restDepartmentMockMvc.perform(post("/api/departments")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(department)))
+        restDepartmentMockMvc
+            .perform(post(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(department)))
             .andExpect(status().isBadRequest());
 
         List<Department> departmentList = departmentRepository.findAll();
         assertThat(departmentList).hasSize(databaseSizeBeforeTest);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
     }
 
     @Test
     @Transactional
-    public void getAllDepartments() throws Exception {
+    void getAllDepartments() throws Exception {
         // Initialize the database
         departmentRepository.saveAndFlush(department);
 
         // Get all the departmentList
-        restDepartmentMockMvc.perform(get("/api/departments?sort=id,desc"))
+        restDepartmentMockMvc
+            .perform(get(ENTITY_API_URL + "?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(department.getId().intValue())))
             .andExpect(jsonPath("$.[*].departmentName").value(hasItem(DEFAULT_DEPARTMENT_NAME)));
     }
-    
+
     @Test
     @Transactional
-    public void getDepartment() throws Exception {
+    void getDepartment() throws Exception {
         // Initialize the database
         departmentRepository.saveAndFlush(department);
 
         // Get the department
-        restDepartmentMockMvc.perform(get("/api/departments/{id}", department.getId()))
+        restDepartmentMockMvc
+            .perform(get(ENTITY_API_URL_ID, department.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.id").value(department.getId().intValue()))
             .andExpect(jsonPath("$.departmentName").value(DEFAULT_DEPARTMENT_NAME));
     }
+
     @Test
     @Transactional
-    public void getNonExistingDepartment() throws Exception {
+    void getNonExistingDepartment() throws Exception {
         // Get the department
-        restDepartmentMockMvc.perform(get("/api/departments/{id}", Long.MAX_VALUE))
-            .andExpect(status().isNotFound());
+        restDepartmentMockMvc.perform(get(ENTITY_API_URL_ID, Long.MAX_VALUE)).andExpect(status().isNotFound());
     }
 
     @Test
     @Transactional
-    public void updateDepartment() throws Exception {
+    void putExistingDepartment() throws Exception {
         // Initialize the database
-        departmentService.save(department);
+        departmentRepository.saveAndFlush(department);
 
         int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+        departmentSearchRepository.save(department);
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
 
         // Update the department
         Department updatedDepartment = departmentRepository.findById(department.getId()).get();
         // Disconnect from session so that the updates on updatedDepartment are not directly saved in db
         em.detach(updatedDepartment);
-        updatedDepartment
-            .departmentName(UPDATED_DEPARTMENT_NAME);
+        updatedDepartment.departmentName(UPDATED_DEPARTMENT_NAME);
 
-        restDepartmentMockMvc.perform(put("/api/departments")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(updatedDepartment)))
+        restDepartmentMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, updatedDepartment.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(updatedDepartment))
+            )
             .andExpect(status().isOk());
 
         // Validate the Department in the database
@@ -213,62 +225,239 @@ public class DepartmentResourceIT {
         assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
         Department testDepartment = departmentList.get(departmentList.size() - 1);
         assertThat(testDepartment.getDepartmentName()).isEqualTo(UPDATED_DEPARTMENT_NAME);
-
-        // Validate the Department in Elasticsearch
-        verify(mockDepartmentSearchRepository, times(2)).save(testDepartment);
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+                int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+                assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+                List<Department> departmentSearchList = IterableUtils.toList(departmentSearchRepository.findAll());
+                Department testDepartmentSearch = departmentSearchList.get(searchDatabaseSizeAfter - 1);
+                assertThat(testDepartmentSearch.getDepartmentName()).isEqualTo(UPDATED_DEPARTMENT_NAME);
+            });
     }
 
     @Test
     @Transactional
-    public void updateNonExistingDepartment() throws Exception {
+    void putNonExistingDepartment() throws Exception {
         int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        department.setId(count.incrementAndGet());
 
         // If the entity doesn't have an ID, it will throw BadRequestAlertException
-        restDepartmentMockMvc.perform(put("/api/departments")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(TestUtil.convertObjectToJsonBytes(department)))
+        restDepartmentMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, department.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(department))
+            )
             .andExpect(status().isBadRequest());
 
         // Validate the Department in the database
         List<Department> departmentList = departmentRepository.findAll();
         assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
-
-        // Validate the Department in Elasticsearch
-        verify(mockDepartmentSearchRepository, times(0)).save(department);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
     }
 
     @Test
     @Transactional
-    public void deleteDepartment() throws Exception {
+    void putWithIdMismatchDepartment() throws Exception {
+        int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        department.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restDepartmentMockMvc
+            .perform(
+                put(ENTITY_API_URL_ID, count.incrementAndGet())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(TestUtil.convertObjectToJsonBytes(department))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Department in the database
+        List<Department> departmentList = departmentRepository.findAll();
+        assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void putWithMissingIdPathParamDepartment() throws Exception {
+        int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        department.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restDepartmentMockMvc
+            .perform(put(ENTITY_API_URL).contentType(MediaType.APPLICATION_JSON).content(TestUtil.convertObjectToJsonBytes(department)))
+            .andExpect(status().isMethodNotAllowed());
+
+        // Validate the Department in the database
+        List<Department> departmentList = departmentRepository.findAll();
+        assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void partialUpdateDepartmentWithPatch() throws Exception {
         // Initialize the database
-        departmentService.save(department);
+        departmentRepository.saveAndFlush(department);
+
+        int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+
+        // Update the department using partial update
+        Department partialUpdatedDepartment = new Department();
+        partialUpdatedDepartment.setId(department.getId());
+
+        restDepartmentMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, partialUpdatedDepartment.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedDepartment))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the Department in the database
+        List<Department> departmentList = departmentRepository.findAll();
+        assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
+        Department testDepartment = departmentList.get(departmentList.size() - 1);
+        assertThat(testDepartment.getDepartmentName()).isEqualTo(DEFAULT_DEPARTMENT_NAME);
+    }
+
+    @Test
+    @Transactional
+    void fullUpdateDepartmentWithPatch() throws Exception {
+        // Initialize the database
+        departmentRepository.saveAndFlush(department);
+
+        int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+
+        // Update the department using partial update
+        Department partialUpdatedDepartment = new Department();
+        partialUpdatedDepartment.setId(department.getId());
+
+        partialUpdatedDepartment.departmentName(UPDATED_DEPARTMENT_NAME);
+
+        restDepartmentMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, partialUpdatedDepartment.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(partialUpdatedDepartment))
+            )
+            .andExpect(status().isOk());
+
+        // Validate the Department in the database
+        List<Department> departmentList = departmentRepository.findAll();
+        assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
+        Department testDepartment = departmentList.get(departmentList.size() - 1);
+        assertThat(testDepartment.getDepartmentName()).isEqualTo(UPDATED_DEPARTMENT_NAME);
+    }
+
+    @Test
+    @Transactional
+    void patchNonExistingDepartment() throws Exception {
+        int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        department.setId(count.incrementAndGet());
+
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
+        restDepartmentMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, department.getId())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(department))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Department in the database
+        List<Department> departmentList = departmentRepository.findAll();
+        assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void patchWithIdMismatchDepartment() throws Exception {
+        int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        department.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restDepartmentMockMvc
+            .perform(
+                patch(ENTITY_API_URL_ID, count.incrementAndGet())
+                    .contentType("application/merge-patch+json")
+                    .content(TestUtil.convertObjectToJsonBytes(department))
+            )
+            .andExpect(status().isBadRequest());
+
+        // Validate the Department in the database
+        List<Department> departmentList = departmentRepository.findAll();
+        assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void patchWithMissingIdPathParamDepartment() throws Exception {
+        int databaseSizeBeforeUpdate = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        department.setId(count.incrementAndGet());
+
+        // If url ID doesn't match entity ID, it will throw BadRequestAlertException
+        restDepartmentMockMvc
+            .perform(
+                patch(ENTITY_API_URL).contentType("application/merge-patch+json").content(TestUtil.convertObjectToJsonBytes(department))
+            )
+            .andExpect(status().isMethodNotAllowed());
+
+        // Validate the Department in the database
+        List<Department> departmentList = departmentRepository.findAll();
+        assertThat(departmentList).hasSize(databaseSizeBeforeUpdate);
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore);
+    }
+
+    @Test
+    @Transactional
+    void deleteDepartment() throws Exception {
+        // Initialize the database
+        departmentRepository.saveAndFlush(department);
+        departmentRepository.save(department);
+        departmentSearchRepository.save(department);
 
         int databaseSizeBeforeDelete = departmentRepository.findAll().size();
+        int searchDatabaseSizeBefore = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeBefore).isEqualTo(databaseSizeBeforeDelete);
 
         // Delete the department
-        restDepartmentMockMvc.perform(delete("/api/departments/{id}", department.getId())
-            .accept(MediaType.APPLICATION_JSON))
+        restDepartmentMockMvc
+            .perform(delete(ENTITY_API_URL_ID, department.getId()).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isNoContent());
 
         // Validate the database contains one less item
         List<Department> departmentList = departmentRepository.findAll();
         assertThat(departmentList).hasSize(databaseSizeBeforeDelete - 1);
-
-        // Validate the Department in Elasticsearch
-        verify(mockDepartmentSearchRepository, times(1)).deleteById(department.getId());
+        int searchDatabaseSizeAfter = IterableUtil.sizeOf(departmentSearchRepository.findAll());
+        assertThat(searchDatabaseSizeAfter).isEqualTo(searchDatabaseSizeBefore - 1);
     }
 
     @Test
     @Transactional
-    public void searchDepartment() throws Exception {
-        // Configure the mock search repository
+    void searchDepartment() throws Exception {
         // Initialize the database
-        departmentService.save(department);
-        when(mockDepartmentSearchRepository.search(queryStringQuery("id:" + department.getId())))
-            .thenReturn(Collections.singletonList(department));
+        department = departmentRepository.saveAndFlush(department);
+        departmentSearchRepository.save(department);
 
         // Search the department
-        restDepartmentMockMvc.perform(get("/api/_search/departments?query=id:" + department.getId()))
+        restDepartmentMockMvc
+            .perform(get(ENTITY_SEARCH_API_URL + "?query=id:" + department.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(department.getId().intValue())))

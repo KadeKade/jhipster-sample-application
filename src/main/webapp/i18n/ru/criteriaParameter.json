@@ -1,0 +1,27 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "criteriaParameter": {
+      "home": {
+        "title": "Criteria Parameters",
+        "refreshListLabel": "Обновить список",
+        "createLabel": "Создать новый Criteria Parameter",
+        "createOrEditLabel": "Создать или отредактировать Criteria Parameter",
+        "search": "Найти Criteria Parameter",
+        "notFound": "Criteria Parameters не найдено"
+      },
+      "created": "Новый Criteria Parameter создан с идентификатором {{ param }}",
+      "updated": "Criteria Parameter обновлен с идентификатором {{ param }}",
+      "deleted": "Criteria Parameter удален с идентификатором {{ param }}",
+      "delete": {
+        "question": "Вы уверены что хотите удалить Criteria Parameter {{ id }}?"
+      },
+      "detail": {
+        "title": "Criteria Parameter"
+      },
+      "id": "ID",
+      "parameterName": "Parameter Name",
+      "parameterValue": "Parameter Value",
+      "criteria": "Criteria"
+    }
+  }
+}

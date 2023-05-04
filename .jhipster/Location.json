@@ -1,5 +1,10 @@
 {
-  "name": "Location",
+  "applications": "*",
+  "changelogDate": "20200830205517",
+  "clientRootFolder": "",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "location",
   "fields": [
     {
       "fieldName": "streetAddress",
@@ -18,26 +23,21 @@
       "fieldType": "String"
     }
   ],
+  "fluentMethods": true,
+  "javadoc": "not an ignored comment",
+  "jpaMetamodelFiltering": false,
+  "name": "Location",
+  "pagination": "no",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "one-to-one",
+      "otherEntityField": "id",
       "otherEntityName": "country",
       "otherEntityRelationshipName": "location",
+      "ownerSide": true,
       "relationshipName": "country",
-      "otherEntityField": "id",
-      "ownerSide": true
+      "relationshipType": "one-to-one"
     }
   ],
-  "changelogDate": "20200830205517",
-  "javadoc": "not an ignored comment",
-  "entityTableName": "location",
-  "dto": "no",
-  "pagination": "no",
-  "service": "serviceImpl",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": "*"
+  "service": "serviceImpl"
 }

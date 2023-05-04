@@ -1,21 +1,19 @@
 package com.mycompany.myapp.service.impl;
 
-import com.mycompany.myapp.service.TaskService;
+import static org.elasticsearch.index.query.QueryBuilders.*;
+
 import com.mycompany.myapp.domain.Task;
 import com.mycompany.myapp.repository.TaskRepository;
 import com.mycompany.myapp.repository.search.TaskSearchRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.mycompany.myapp.service.TaskService;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service Implementation for managing {@link Task}.
@@ -39,8 +37,40 @@ public class TaskServiceImpl implements TaskService {
     public Task save(Task task) {
         log.debug("Request to save Task : {}", task);
         Task result = taskRepository.save(task);
-        taskSearchRepository.save(result);
+        taskSearchRepository.index(result);
         return result;
+    }
+
+    @Override
+    public Task update(Task task) {
+        log.debug("Request to update Task : {}", task);
+        Task result = taskRepository.save(task);
+        taskSearchRepository.index(result);
+        return result;
+    }
+
+    @Override
+    public Optional<Task> partialUpdate(Task task) {
+        log.debug("Request to partially update Task : {}", task);
+
+        return taskRepository
+            .findById(task.getId())
+            .map(existingTask -> {
+                if (task.getTitle() != null) {
+                    existingTask.setTitle(task.getTitle());
+                }
+                if (task.getDescription() != null) {
+                    existingTask.setDescription(task.getDescription());
+                }
+
+                return existingTask;
+            })
+            .map(taskRepository::save)
+            .map(savedTask -> {
+                taskSearchRepository.save(savedTask);
+
+                return savedTask;
+            });
     }
 
     @Override
@@ -49,7 +79,6 @@ public class TaskServiceImpl implements TaskService {
         log.debug("Request to get all Tasks");
         return taskRepository.findAll();
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -69,8 +98,6 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public List<Task> search(String query) {
         log.debug("Request to search Tasks for query {}", query);
-        return StreamSupport
-            .stream(taskSearchRepository.search(queryStringQuery(query)).spliterator(), false)
-        .collect(Collectors.toList());
+        return StreamSupport.stream(taskSearchRepository.search(query).spliterator(), false).collect(Collectors.toList());
     }
 }

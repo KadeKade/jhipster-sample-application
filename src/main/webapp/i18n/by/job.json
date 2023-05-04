@@ -3,6 +3,7 @@
     "job": {
       "home": {
         "title": "Jobs",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Стварыць новы Job",
         "createOrEditLabel": "Стварыць або адрэдагаваць Job",
         "search": "Знайсці Job",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Job"
       },
+      "id": "ID",
       "jobTitle": "Job Title",
       "minSalary": "Min Salary",
       "maxSalary": "Max Salary",

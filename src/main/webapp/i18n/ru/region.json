@@ -3,10 +3,11 @@
     "region": {
       "home": {
         "title": "Regions",
+        "refreshListLabel": "Обновить список",
         "createLabel": "Создать новый Region",
         "createOrEditLabel": "Создать или отредактировать Region",
         "search": "Найти Region",
-        "notFound": "No Regions found"
+        "notFound": "Regions не найдено"
       },
       "created": "Новый Region создан с идентификатором {{ param }}",
       "updated": "Region обновлен с идентификатором {{ param }}",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Region"
       },
+      "id": "ID",
       "regionName": "Region Name"
     }
   }

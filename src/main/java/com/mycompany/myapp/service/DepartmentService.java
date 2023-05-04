@@ -1,7 +1,6 @@
 package com.mycompany.myapp.service;
 
 import com.mycompany.myapp.domain.Department;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +8,6 @@ import java.util.Optional;
  * Service Interface for managing {@link Department}.
  */
 public interface DepartmentService {
-
     /**
      * Save a department.
      *
@@ -19,12 +17,27 @@ public interface DepartmentService {
     Department save(Department department);
 
     /**
+     * Updates a department.
+     *
+     * @param department the entity to update.
+     * @return the persisted entity.
+     */
+    Department update(Department department);
+
+    /**
+     * Partially updates a department.
+     *
+     * @param department the entity to update partially.
+     * @return the persisted entity.
+     */
+    Optional<Department> partialUpdate(Department department);
+
+    /**
      * Get all the departments.
      *
      * @return the list of entities.
      */
     List<Department> findAll();
-
 
     /**
      * Get the "id" department.
@@ -45,7 +58,6 @@ public interface DepartmentService {
      * Search for the department corresponding to the query.
      *
      * @param query the query of the search.
-     * 
      * @return the list of entities.
      */
     List<Department> search(String query);

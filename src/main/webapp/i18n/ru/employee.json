@@ -3,10 +3,11 @@
     "employee": {
       "home": {
         "title": "Employees",
+        "refreshListLabel": "Обновить список",
         "createLabel": "Создать новый Employee",
         "createOrEditLabel": "Создать или отредактировать Employee",
         "search": "Найти Employee",
-        "notFound": "No Employees found"
+        "notFound": "Employees не найдено"
       },
       "created": "Новый Employee создан с идентификатором {{ param }}",
       "updated": "Employee обновлен с идентификатором {{ param }}",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Employee"
       },
+      "id": "ID",
       "firstName": "First Name",
       "lastName": "Last Name",
       "email": "Email",

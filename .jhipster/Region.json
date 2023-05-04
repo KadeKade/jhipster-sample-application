@@ -1,21 +1,21 @@
 {
-  "name": "Region",
+  "applications": "*",
+  "changelogDate": "20200830205317",
+  "clientRootFolder": "",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "region",
   "fields": [
     {
       "fieldName": "regionName",
       "fieldType": "String"
     }
   ],
-  "relationships": [],
-  "changelogDate": "20200830205317",
-  "entityTableName": "region",
-  "dto": "no",
-  "pagination": "no",
-  "service": "serviceImpl",
-  "jpaMetamodelFiltering": false,
   "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "Region",
+  "pagination": "no",
   "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": "*"
+  "relationships": [],
+  "service": "serviceImpl"
 }

@@ -3,10 +3,11 @@
     "job": {
       "home": {
         "title": "Jobs",
+        "refreshListLabel": "Обновить список",
         "createLabel": "Создать новый Job",
         "createOrEditLabel": "Создать или отредактировать Job",
         "search": "Найти Job",
-        "notFound": "No Jobs found"
+        "notFound": "Jobs не найдено"
       },
       "created": "Новый Job создан с идентификатором {{ param }}",
       "updated": "Job обновлен с идентификатором {{ param }}",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Job"
       },
+      "id": "ID",
       "jobTitle": "Job Title",
       "minSalary": "Min Salary",
       "maxSalary": "Max Salary",

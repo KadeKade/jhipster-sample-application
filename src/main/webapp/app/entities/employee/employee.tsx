@@ -1,87 +1,107 @@
 import React, { useState, useEffect } from 'react';
-import InfiniteScroll from 'react-infinite-scroller';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, InputGroup, Col, Row, Table } from 'reactstrap';
-import { AvForm, AvGroup, AvInput } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudSearchAction, ICrudGetAllAction, TextFormat, getSortState, IPaginationBaseState } from 'react-jhipster';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Button, Input, InputGroup, FormGroup, Form, Row, Col, Table } from 'reactstrap';
+import { Translate, translate, TextFormat, getSortState } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getSearchEntities, getEntities, reset } from './employee.reducer';
-import { IEmployee } from 'app/shared/model/employee.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
-import { ITEMS_PER_PAGE } from 'app/shared/util/pagination.constants';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/util/pagination.constants';
 import { overridePaginationStateWithQueryParams } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IEmployeeProps extends StateProps, DispatchProps, RouteComponentProps<{ url: string }> {}
+import { IEmployee } from 'app/shared/model/employee.model';
+import { searchEntities, getEntities, reset } from './employee.reducer';
 
-export const Employee = (props: IEmployeeProps) => {
+export const Employee = () => {
+  const dispatch = useAppDispatch();
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [search, setSearch] = useState('');
   const [paginationState, setPaginationState] = useState(
-    overridePaginationStateWithQueryParams(getSortState(props.location, ITEMS_PER_PAGE), props.location.search)
+    overridePaginationStateWithQueryParams(getSortState(location, ITEMS_PER_PAGE, 'id'), location.search)
   );
   const [sorting, setSorting] = useState(false);
 
+  const employeeList = useAppSelector(state => state.employee.entities);
+  const loading = useAppSelector(state => state.employee.loading);
+  const totalItems = useAppSelector(state => state.employee.totalItems);
+  const links = useAppSelector(state => state.employee.links);
+  const entity = useAppSelector(state => state.employee.entity);
+  const updateSuccess = useAppSelector(state => state.employee.updateSuccess);
+
   const getAllEntities = () => {
     if (search) {
-      props.getSearchEntities(
-        search,
-        paginationState.activePage - 1,
-        paginationState.itemsPerPage,
-        `${paginationState.sort},${paginationState.order}`
+      dispatch(
+        searchEntities({
+          query: search,
+          page: paginationState.activePage - 1,
+          size: paginationState.itemsPerPage,
+          sort: `${paginationState.sort},${paginationState.order}`,
+        })
       );
     } else {
-      props.getEntities(paginationState.activePage - 1, paginationState.itemsPerPage, `${paginationState.sort},${paginationState.order}`);
+      dispatch(
+        getEntities({
+          page: paginationState.activePage - 1,
+          size: paginationState.itemsPerPage,
+          sort: `${paginationState.sort},${paginationState.order}`,
+        })
+      );
     }
   };
 
   const resetAll = () => {
-    props.reset();
+    dispatch(reset());
     setPaginationState({
       ...paginationState,
       activePage: 1,
     });
-    props.getEntities();
+    dispatch(getEntities({}));
   };
 
   useEffect(() => {
     resetAll();
   }, []);
 
-  const startSearching = () => {
+  const startSearching = e => {
     if (search) {
-      props.reset();
+      dispatch(reset());
       setPaginationState({
         ...paginationState,
         activePage: 1,
       });
-      props.getSearchEntities(
-        search,
-        paginationState.activePage - 1,
-        paginationState.itemsPerPage,
-        `${paginationState.sort},${paginationState.order}`
+      dispatch(
+        searchEntities({
+          query: search,
+          page: paginationState.activePage - 1,
+          size: paginationState.itemsPerPage,
+          sort: `${paginationState.sort},${paginationState.order}`,
+        })
       );
     }
+    e.preventDefault();
   };
 
   const clear = () => {
-    props.reset();
+    dispatch(reset());
     setSearch('');
     setPaginationState({
       ...paginationState,
       activePage: 1,
     });
-    props.getEntities();
+    dispatch(getEntities({}));
   };
 
   const handleSearch = event => setSearch(event.target.value);
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       resetAll();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
   useEffect(() => {
     getAllEntities();
@@ -104,36 +124,45 @@ export const Employee = (props: IEmployeeProps) => {
   }, [sorting, search]);
 
   const sort = p => () => {
-    props.reset();
+    dispatch(reset());
     setPaginationState({
       ...paginationState,
       activePage: 1,
-      order: paginationState.order === 'asc' ? 'desc' : 'asc',
+      order: paginationState.order === ASC ? DESC : ASC,
       sort: p,
     });
     setSorting(true);
   };
 
-  const { employeeList, match, loading } = props;
+  const handleSyncList = () => {
+    resetAll();
+  };
+
   return (
     <div>
-      <h2 id="employee-heading">
+      <h2 id="employee-heading" data-cy="EmployeeHeading">
         <Translate contentKey="jhipsterSampleApplicationApp.employee.home.title">Employees</Translate>
-        <Link to={`${match.url}/new`} className="btn btn-primary float-right jh-create-entity" id="jh-create-entity">
-          <FontAwesomeIcon icon="plus" />
-          &nbsp;
-          <Translate contentKey="jhipsterSampleApplicationApp.employee.home.createLabel">Create new Employee</Translate>
-        </Link>
+        <div className="d-flex justify-content-end">
+          <Button className="me-2" color="info" onClick={handleSyncList} disabled={loading}>
+            <FontAwesomeIcon icon="sync" spin={loading} />{' '}
+            <Translate contentKey="jhipsterSampleApplicationApp.employee.home.refreshListLabel">Refresh List</Translate>
+          </Button>
+          <Link to="/employee/new" className="btn btn-primary jh-create-entity" id="jh-create-entity" data-cy="entityCreateButton">
+            <FontAwesomeIcon icon="plus" />
+            &nbsp;
+            <Translate contentKey="jhipsterSampleApplicationApp.employee.home.createLabel">Create new Employee</Translate>
+          </Link>
+        </div>
       </h2>
       <Row>
         <Col sm="12">
-          <AvForm onSubmit={startSearching}>
-            <AvGroup>
+          <Form onSubmit={startSearching}>
+            <FormGroup>
               <InputGroup>
-                <AvInput
+                <Input
                   type="text"
                   name="search"
-                  value={search}
+                  defaultValue={search}
                   onChange={handleSearch}
                   placeholder={translate('jhipsterSampleApplicationApp.employee.home.search')}
                 />
@@ -144,25 +173,23 @@ export const Employee = (props: IEmployeeProps) => {
                   <FontAwesomeIcon icon="trash" />
                 </Button>
               </InputGroup>
-            </AvGroup>
-          </AvForm>
+            </FormGroup>
+          </Form>
         </Col>
       </Row>
       <div className="table-responsive">
         <InfiniteScroll
-          pageStart={paginationState.activePage}
-          loadMore={handleLoadMore}
-          hasMore={paginationState.activePage - 1 < props.links.next}
+          dataLength={employeeList ? employeeList.length : 0}
+          next={handleLoadMore}
+          hasMore={paginationState.activePage - 1 < links.next}
           loader={<div className="loader">Loading ...</div>}
-          threshold={0}
-          initialLoad={false}
         >
           {employeeList && employeeList.length > 0 ? (
             <Table responsive>
               <thead>
                 <tr>
                   <th className="hand" onClick={sort('id')}>
-                    <Translate contentKey="global.field.id">ID</Translate> <FontAwesomeIcon icon="sort" />
+                    <Translate contentKey="jhipsterSampleApplicationApp.employee.id">ID</Translate> <FontAwesomeIcon icon="sort" />
                   </th>
                   <th className="hand" onClick={sort('firstName')}>
                     <Translate contentKey="jhipsterSampleApplicationApp.employee.firstName">First Name</Translate>{' '}
@@ -203,9 +230,9 @@ export const Employee = (props: IEmployeeProps) => {
               </thead>
               <tbody>
                 {employeeList.map((employee, i) => (
-                  <tr key={`entity-${i}`}>
+                  <tr key={`entity-${i}`} data-cy="entityTable">
                     <td>
-                      <Button tag={Link} to={`${match.url}/${employee.id}`} color="link" size="sm">
+                      <Button tag={Link} to={`/employee/${employee.id}`} color="link" size="sm">
                         {employee.id}
                       </Button>
                     </td>
@@ -216,23 +243,23 @@ export const Employee = (props: IEmployeeProps) => {
                     <td>{employee.hireDate ? <TextFormat type="date" value={employee.hireDate} format={APP_DATE_FORMAT} /> : null}</td>
                     <td>{employee.salary}</td>
                     <td>{employee.commissionPct}</td>
-                    <td>{employee.manager ? <Link to={`employee/${employee.manager.id}`}>{employee.manager.id}</Link> : ''}</td>
-                    <td>{employee.department ? <Link to={`department/${employee.department.id}`}>{employee.department.id}</Link> : ''}</td>
-                    <td className="text-right">
+                    <td>{employee.manager ? <Link to={`/employee/${employee.manager.id}`}>{employee.manager.id}</Link> : ''}</td>
+                    <td>{employee.department ? <Link to={`/department/${employee.department.id}`}>{employee.department.id}</Link> : ''}</td>
+                    <td className="text-end">
                       <div className="btn-group flex-btn-group-container">
-                        <Button tag={Link} to={`${match.url}/${employee.id}`} color="info" size="sm">
+                        <Button tag={Link} to={`/employee/${employee.id}`} color="info" size="sm" data-cy="entityDetailsButton">
                           <FontAwesomeIcon icon="eye" />{' '}
                           <span className="d-none d-md-inline">
                             <Translate contentKey="entity.action.view">View</Translate>
                           </span>
                         </Button>
-                        <Button tag={Link} to={`${match.url}/${employee.id}/edit`} color="primary" size="sm">
+                        <Button tag={Link} to={`/employee/${employee.id}/edit`} color="primary" size="sm" data-cy="entityEditButton">
                           <FontAwesomeIcon icon="pencil-alt" />{' '}
                           <span className="d-none d-md-inline">
                             <Translate contentKey="entity.action.edit">Edit</Translate>
                           </span>
                         </Button>
-                        <Button tag={Link} to={`${match.url}/${employee.id}/delete`} color="danger" size="sm">
+                        <Button tag={Link} to={`/employee/${employee.id}/delete`} color="danger" size="sm" data-cy="entityDeleteButton">
                           <FontAwesomeIcon icon="trash" />{' '}
                           <span className="d-none d-md-inline">
                             <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -257,22 +284,4 @@ export const Employee = (props: IEmployeeProps) => {
   );
 };
 
-const mapStateToProps = ({ employee }: IRootState) => ({
-  employeeList: employee.entities,
-  loading: employee.loading,
-  totalItems: employee.totalItems,
-  links: employee.links,
-  entity: employee.entity,
-  updateSuccess: employee.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getSearchEntities,
-  getEntities,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(Employee);
+export default Employee;

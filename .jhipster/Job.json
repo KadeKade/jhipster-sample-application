@@ -1,5 +1,10 @@
 {
-  "name": "Job",
+  "applications": "*",
+  "changelogDate": "20200830205917",
+  "clientRootFolder": "",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "job",
   "fields": [
     {
       "fieldName": "jobTitle",
@@ -14,32 +19,27 @@
       "fieldType": "Long"
     }
   ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "Job",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "many-to-many",
+      "otherEntityField": "title",
       "otherEntityName": "task",
       "otherEntityRelationshipName": "job",
+      "ownerSide": true,
       "relationshipName": "task",
-      "otherEntityField": "title",
-      "ownerSide": true
+      "relationshipType": "many-to-many"
     },
     {
-      "relationshipType": "many-to-one",
+      "otherEntityField": "id",
       "otherEntityName": "employee",
       "otherEntityRelationshipName": "job",
       "relationshipName": "employee",
-      "otherEntityField": "id"
+      "relationshipType": "many-to-one"
     }
   ],
-  "changelogDate": "20200830205917",
-  "entityTableName": "job",
-  "dto": "no",
-  "pagination": "pagination",
-  "service": "no",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": "*"
+  "service": "no"
 }

@@ -1,0 +1,27 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "actionParameter": {
+      "home": {
+        "title": "Action Parameters",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Стварыць новы Action Parameter",
+        "createOrEditLabel": "Стварыць або адрэдагаваць Action Parameter",
+        "search": "Знайсці Action Parameter",
+        "notFound": "No Action Parameters found"
+      },
+      "created": "Новы Action Parameter створан з ідэнтыфікатарам {{ param }}",
+      "updated": "Action Parameter абноўлен з ідэнтыфікатарам {{ param }}",
+      "deleted": "Action Parameter выдален з ідэнтыфікатарам {{ param }}",
+      "delete": {
+        "question": "Вы ўпэўнены, што жадаеце выдаліць Action Parameter {{ id }}?"
+      },
+      "detail": {
+        "title": "Action Parameter"
+      },
+      "id": "ID",
+      "parameterName": "Parameter Name",
+      "parameterValue": "Parameter Value",
+      "criterias": "Criterias"
+    }
+  }
+}

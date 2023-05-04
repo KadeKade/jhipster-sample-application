@@ -1,0 +1,27 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "criteriaParameter": {
+      "home": {
+        "title": "Criteria Parameters",
+        "refreshListLabel": "Refresh list",
+        "createLabel": "Create a new Criteria Parameter",
+        "createOrEditLabel": "Create or edit a Criteria Parameter",
+        "search": "Search for Criteria Parameter",
+        "notFound": "No Criteria Parameters found"
+      },
+      "created": "A new Criteria Parameter is created with identifier {{ param }}",
+      "updated": "A Criteria Parameter is updated with identifier {{ param }}",
+      "deleted": "A Criteria Parameter is deleted with identifier {{ param }}",
+      "delete": {
+        "question": "Are you sure you want to delete Criteria Parameter {{ id }}?"
+      },
+      "detail": {
+        "title": "Criteria Parameter"
+      },
+      "id": "ID",
+      "parameterName": "Parameter Name",
+      "parameterValue": "Parameter Value",
+      "criteria": "Criteria"
+    }
+  }
+}

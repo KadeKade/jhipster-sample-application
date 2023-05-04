@@ -1,0 +1,31 @@
+{
+  "applications": "*",
+  "changelogDate": "20230504080117",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "criteria_parameter",
+  "fields": [
+    {
+      "fieldName": "parameterName",
+      "fieldType": "String"
+    },
+    {
+      "fieldName": "parameterValue",
+      "fieldType": "String"
+    }
+  ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "CriteriaParameter",
+  "pagination": "no",
+  "readOnly": false,
+  "relationships": [
+    {
+      "otherEntityName": "criteria",
+      "otherEntityRelationshipName": "criteriaParameters",
+      "relationshipName": "criteria",
+      "relationshipType": "many-to-one"
+    }
+  ],
+  "service": "no"
+}

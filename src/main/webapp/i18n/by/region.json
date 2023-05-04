@@ -3,6 +3,7 @@
     "region": {
       "home": {
         "title": "Regions",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Стварыць новы Region",
         "createOrEditLabel": "Стварыць або адрэдагаваць Region",
         "search": "Знайсці Region",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Region"
       },
+      "id": "ID",
       "regionName": "Region Name"
     }
   }

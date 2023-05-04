@@ -1,22 +1,21 @@
 package com.mycompany.myapp.domain;
 
-import io.swagger.annotations.ApiModel;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
+import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import java.io.Serializable;
 
 /**
  * not an ignored comment
  */
-@ApiModel(description = "not an ignored comment")
+@Schema(description = "not an ignored comment")
 @Entity
 @Table(name = "location")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @org.springframework.data.elasticsearch.annotations.Document(indexName = "location")
+@SuppressWarnings("common-java:DuplicatedBlocks")
 public class Location implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -24,6 +23,7 @@ public class Location implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequenceGenerator")
     @SequenceGenerator(name = "sequenceGenerator")
+    @Column(name = "id")
     private Long id;
 
     @Column(name = "street_address")
@@ -38,13 +38,20 @@ public class Location implements Serializable {
     @Column(name = "state_province")
     private String stateProvince;
 
+    @JsonIgnoreProperties(value = { "region" }, allowSetters = true)
     @OneToOne
     @JoinColumn(unique = true)
     private Country country;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public Location id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -52,11 +59,11 @@ public class Location implements Serializable {
     }
 
     public String getStreetAddress() {
-        return streetAddress;
+        return this.streetAddress;
     }
 
     public Location streetAddress(String streetAddress) {
-        this.streetAddress = streetAddress;
+        this.setStreetAddress(streetAddress);
         return this;
     }
 
@@ -65,11 +72,11 @@ public class Location implements Serializable {
     }
 
     public String getPostalCode() {
-        return postalCode;
+        return this.postalCode;
     }
 
     public Location postalCode(String postalCode) {
-        this.postalCode = postalCode;
+        this.setPostalCode(postalCode);
         return this;
     }
 
@@ -78,11 +85,11 @@ public class Location implements Serializable {
     }
 
     public String getCity() {
-        return city;
+        return this.city;
     }
 
     public Location city(String city) {
-        this.city = city;
+        this.setCity(city);
         return this;
     }
 
@@ -91,11 +98,11 @@ public class Location implements Serializable {
     }
 
     public String getStateProvince() {
-        return stateProvince;
+        return this.stateProvince;
     }
 
     public Location stateProvince(String stateProvince) {
-        this.stateProvince = stateProvince;
+        this.setStateProvince(stateProvince);
         return this;
     }
 
@@ -104,17 +111,18 @@ public class Location implements Serializable {
     }
 
     public Country getCountry() {
-        return country;
-    }
-
-    public Location country(Country country) {
-        this.country = country;
-        return this;
+        return this.country;
     }
 
     public void setCountry(Country country) {
         this.country = country;
     }
+
+    public Location country(Country country) {
+        this.setCountry(country);
+        return this;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -130,7 +138,8 @@ public class Location implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

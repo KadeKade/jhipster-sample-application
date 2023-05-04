@@ -1,30 +1,37 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Button, Row, Col } from 'reactstrap';
-import { Translate, ICrudGetAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
-import { getEntity } from './location.reducer';
-import { ILocation } from 'app/shared/model/location.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface ILocationDetailProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+import { getEntity } from './location.reducer';
 
-export const LocationDetail = (props: ILocationDetailProps) => {
+export const LocationDetail = () => {
+  const dispatch = useAppDispatch();
+
+  const { id } = useParams<'id'>();
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
   }, []);
 
-  const { locationEntity } = props;
+  const locationEntity = useAppSelector(state => state.location.entity);
   return (
     <Row>
       <Col md="8">
-        <h2>
-          <Translate contentKey="jhipsterSampleApplicationApp.location.detail.title">Location</Translate> [<b>{locationEntity.id}</b>]
+        <h2 data-cy="locationDetailsHeading">
+          <Translate contentKey="jhipsterSampleApplicationApp.location.detail.title">Location</Translate>
         </h2>
         <dl className="jh-entity-details">
+          <dt>
+            <span id="id">
+              <Translate contentKey="global.field.id">ID</Translate>
+            </span>
+          </dt>
+          <dd>{locationEntity.id}</dd>
           <dt>
             <span id="streetAddress">
               <Translate contentKey="jhipsterSampleApplicationApp.location.streetAddress">Street Address</Translate>
@@ -54,7 +61,7 @@ export const LocationDetail = (props: ILocationDetailProps) => {
           </dt>
           <dd>{locationEntity.country ? locationEntity.country.id : ''}</dd>
         </dl>
-        <Button tag={Link} to="/location" replace color="info">
+        <Button tag={Link} to="/location" replace color="info" data-cy="entityDetailsBackButton">
           <FontAwesomeIcon icon="arrow-left" />{' '}
           <span className="d-none d-md-inline">
             <Translate contentKey="entity.action.back">Back</Translate>
@@ -72,13 +79,4 @@ export const LocationDetail = (props: ILocationDetailProps) => {
   );
 };
 
-const mapStateToProps = ({ location }: IRootState) => ({
-  locationEntity: location.entity,
-});
-
-const mapDispatchToProps = { getEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(LocationDetail);
+export default LocationDetail;

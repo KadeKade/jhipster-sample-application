@@ -1,5 +1,10 @@
 {
-  "name": "JobHistory",
+  "applications": "*",
+  "changelogDate": "20200830210017",
+  "clientRootFolder": "",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "job_history",
   "fields": [
     {
       "fieldName": "startDate",
@@ -15,41 +20,36 @@
       "fieldValues": "FRENCH,ENGLISH,SPANISH"
     }
   ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "name": "JobHistory",
+  "pagination": "infinite-scroll",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "one-to-one",
+      "otherEntityField": "id",
       "otherEntityName": "job",
       "otherEntityRelationshipName": "jobHistory",
+      "ownerSide": true,
       "relationshipName": "job",
-      "otherEntityField": "id",
-      "ownerSide": true
+      "relationshipType": "one-to-one"
     },
     {
-      "relationshipType": "one-to-one",
+      "otherEntityField": "id",
       "otherEntityName": "department",
       "otherEntityRelationshipName": "jobHistory",
+      "ownerSide": true,
       "relationshipName": "department",
-      "otherEntityField": "id",
-      "ownerSide": true
+      "relationshipType": "one-to-one"
     },
     {
-      "relationshipType": "one-to-one",
+      "otherEntityField": "id",
       "otherEntityName": "employee",
       "otherEntityRelationshipName": "jobHistory",
+      "ownerSide": true,
       "relationshipName": "employee",
-      "otherEntityField": "id",
-      "ownerSide": true
+      "relationshipType": "one-to-one"
     }
   ],
-  "changelogDate": "20200830210017",
-  "entityTableName": "job_history",
-  "dto": "no",
-  "pagination": "infinite-scroll",
-  "service": "serviceImpl",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": "*"
+  "service": "serviceImpl"
 }

@@ -1,0 +1,27 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "actionParameter": {
+      "home": {
+        "title": "Action Parameters",
+        "refreshListLabel": "Обновить список",
+        "createLabel": "Создать новый Action Parameter",
+        "createOrEditLabel": "Создать или отредактировать Action Parameter",
+        "search": "Найти Action Parameter",
+        "notFound": "Action Parameters не найдено"
+      },
+      "created": "Новый Action Parameter создан с идентификатором {{ param }}",
+      "updated": "Action Parameter обновлен с идентификатором {{ param }}",
+      "deleted": "Action Parameter удален с идентификатором {{ param }}",
+      "delete": {
+        "question": "Вы уверены что хотите удалить Action Parameter {{ id }}?"
+      },
+      "detail": {
+        "title": "Action Parameter"
+      },
+      "id": "ID",
+      "parameterName": "Parameter Name",
+      "parameterValue": "Parameter Value",
+      "criterias": "Criterias"
+    }
+  }
+}

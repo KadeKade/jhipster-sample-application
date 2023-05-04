@@ -1,39 +1,47 @@
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
-import { Translate, ICrudGetAction, ICrudDeleteAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { ILocation } from 'app/shared/model/location.model';
-import { IRootState } from 'app/shared/reducers';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 import { getEntity, deleteEntity } from './location.reducer';
 
-export interface ILocationDeleteDialogProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const LocationDeleteDialog = () => {
+  const dispatch = useAppDispatch();
 
-export const LocationDeleteDialog = (props: ILocationDeleteDialogProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { id } = useParams<'id'>();
+
+  const [loadModal, setLoadModal] = useState(false);
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
+    setLoadModal(true);
   }, []);
 
+  const locationEntity = useAppSelector(state => state.location.entity);
+  const updateSuccess = useAppSelector(state => state.location.updateSuccess);
+
   const handleClose = () => {
-    props.history.push('/location');
+    navigate('/location');
   };
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess && loadModal) {
       handleClose();
+      setLoadModal(false);
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
   const confirmDelete = () => {
-    props.deleteEntity(props.locationEntity.id);
+    dispatch(deleteEntity(locationEntity.id));
   };
 
-  const { locationEntity } = props;
   return (
     <Modal isOpen toggle={handleClose}>
-      <ModalHeader toggle={handleClose}>
+      <ModalHeader toggle={handleClose} data-cy="locationDeleteDialogHeading">
         <Translate contentKey="entity.delete.title">Confirm delete operation</Translate>
       </ModalHeader>
       <ModalBody id="jhipsterSampleApplicationApp.location.delete.question">
@@ -47,7 +55,7 @@ export const LocationDeleteDialog = (props: ILocationDeleteDialogProps) => {
           &nbsp;
           <Translate contentKey="entity.action.cancel">Cancel</Translate>
         </Button>
-        <Button id="jhi-confirm-delete-location" color="danger" onClick={confirmDelete}>
+        <Button id="jhi-confirm-delete-location" data-cy="entityConfirmDeleteButton" color="danger" onClick={confirmDelete}>
           <FontAwesomeIcon icon="trash" />
           &nbsp;
           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -57,14 +65,4 @@ export const LocationDeleteDialog = (props: ILocationDeleteDialogProps) => {
   );
 };
 
-const mapStateToProps = ({ location }: IRootState) => ({
-  locationEntity: location.entity,
-  updateSuccess: location.updateSuccess,
-});
-
-const mapDispatchToProps = { getEntity, deleteEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(LocationDeleteDialog);
+export default LocationDeleteDialog;

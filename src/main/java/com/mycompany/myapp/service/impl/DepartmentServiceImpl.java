@@ -1,21 +1,19 @@
 package com.mycompany.myapp.service.impl;
 
-import com.mycompany.myapp.service.DepartmentService;
+import static org.elasticsearch.index.query.QueryBuilders.*;
+
 import com.mycompany.myapp.domain.Department;
 import com.mycompany.myapp.repository.DepartmentRepository;
 import com.mycompany.myapp.repository.search.DepartmentSearchRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.mycompany.myapp.service.DepartmentService;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service Implementation for managing {@link Department}.
@@ -39,8 +37,37 @@ public class DepartmentServiceImpl implements DepartmentService {
     public Department save(Department department) {
         log.debug("Request to save Department : {}", department);
         Department result = departmentRepository.save(department);
-        departmentSearchRepository.save(result);
+        departmentSearchRepository.index(result);
         return result;
+    }
+
+    @Override
+    public Department update(Department department) {
+        log.debug("Request to update Department : {}", department);
+        Department result = departmentRepository.save(department);
+        departmentSearchRepository.index(result);
+        return result;
+    }
+
+    @Override
+    public Optional<Department> partialUpdate(Department department) {
+        log.debug("Request to partially update Department : {}", department);
+
+        return departmentRepository
+            .findById(department.getId())
+            .map(existingDepartment -> {
+                if (department.getDepartmentName() != null) {
+                    existingDepartment.setDepartmentName(department.getDepartmentName());
+                }
+
+                return existingDepartment;
+            })
+            .map(departmentRepository::save)
+            .map(savedDepartment -> {
+                departmentSearchRepository.save(savedDepartment);
+
+                return savedDepartment;
+            });
     }
 
     @Override
@@ -49,7 +76,6 @@ public class DepartmentServiceImpl implements DepartmentService {
         log.debug("Request to get all Departments");
         return departmentRepository.findAll();
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -69,8 +95,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional(readOnly = true)
     public List<Department> search(String query) {
         log.debug("Request to search Departments for query {}", query);
-        return StreamSupport
-            .stream(departmentSearchRepository.search(queryStringQuery(query)).spliterator(), false)
-        .collect(Collectors.toList());
+        return StreamSupport.stream(departmentSearchRepository.search(query).spliterator(), false).collect(Collectors.toList());
     }
 }

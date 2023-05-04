@@ -1,39 +1,47 @@
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
-import { RouteComponentProps } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
-import { Translate, ICrudGetAction, ICrudDeleteAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRegion } from 'app/shared/model/region.model';
-import { IRootState } from 'app/shared/reducers';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 import { getEntity, deleteEntity } from './region.reducer';
 
-export interface IRegionDeleteDialogProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const RegionDeleteDialog = () => {
+  const dispatch = useAppDispatch();
 
-export const RegionDeleteDialog = (props: IRegionDeleteDialogProps) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { id } = useParams<'id'>();
+
+  const [loadModal, setLoadModal] = useState(false);
+
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(id));
+    setLoadModal(true);
   }, []);
 
+  const regionEntity = useAppSelector(state => state.region.entity);
+  const updateSuccess = useAppSelector(state => state.region.updateSuccess);
+
   const handleClose = () => {
-    props.history.push('/region');
+    navigate('/region');
   };
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess && loadModal) {
       handleClose();
+      setLoadModal(false);
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
   const confirmDelete = () => {
-    props.deleteEntity(props.regionEntity.id);
+    dispatch(deleteEntity(regionEntity.id));
   };
 
-  const { regionEntity } = props;
   return (
     <Modal isOpen toggle={handleClose}>
-      <ModalHeader toggle={handleClose}>
+      <ModalHeader toggle={handleClose} data-cy="regionDeleteDialogHeading">
         <Translate contentKey="entity.delete.title">Confirm delete operation</Translate>
       </ModalHeader>
       <ModalBody id="jhipsterSampleApplicationApp.region.delete.question">
@@ -47,7 +55,7 @@ export const RegionDeleteDialog = (props: IRegionDeleteDialogProps) => {
           &nbsp;
           <Translate contentKey="entity.action.cancel">Cancel</Translate>
         </Button>
-        <Button id="jhi-confirm-delete-region" color="danger" onClick={confirmDelete}>
+        <Button id="jhi-confirm-delete-region" data-cy="entityConfirmDeleteButton" color="danger" onClick={confirmDelete}>
           <FontAwesomeIcon icon="trash" />
           &nbsp;
           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -57,14 +65,4 @@ export const RegionDeleteDialog = (props: IRegionDeleteDialogProps) => {
   );
 };
 
-const mapStateToProps = ({ region }: IRootState) => ({
-  regionEntity: region.entity,
-  updateSuccess: region.updateSuccess,
-});
-
-const mapDispatchToProps = { getEntity, deleteEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(RegionDeleteDialog);
+export default RegionDeleteDialog;

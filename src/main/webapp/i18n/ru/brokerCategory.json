@@ -1,0 +1,26 @@
+{
+  "jhipsterSampleApplicationApp": {
+    "brokerCategory": {
+      "home": {
+        "title": "Broker Categories",
+        "refreshListLabel": "Обновить список",
+        "createLabel": "Создать новый Broker Category",
+        "createOrEditLabel": "Создать или отредактировать Broker Category",
+        "search": "Найти Broker Category",
+        "notFound": "Broker Categories не найдено"
+      },
+      "created": "Новый Broker Category создан с идентификатором {{ param }}",
+      "updated": "Broker Category обновлен с идентификатором {{ param }}",
+      "deleted": "Broker Category удален с идентификатором {{ param }}",
+      "delete": {
+        "question": "Вы уверены что хотите удалить Broker Category {{ id }}?"
+      },
+      "detail": {
+        "title": "Broker Category"
+      },
+      "id": "ID",
+      "displayName": "Display Name",
+      "criteriaSets": "Criteria Sets"
+    }
+  }
+}

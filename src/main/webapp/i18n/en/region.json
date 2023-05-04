@@ -3,6 +3,7 @@
     "region": {
       "home": {
         "title": "Regions",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Region",
         "createOrEditLabel": "Create or edit a Region",
         "search": "Search for Region",
@@ -17,6 +18,7 @@
       "detail": {
         "title": "Region"
       },
+      "id": "ID",
       "regionName": "Region Name"
     }
   }

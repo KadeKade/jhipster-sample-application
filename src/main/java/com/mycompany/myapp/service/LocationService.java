@@ -1,7 +1,6 @@
 package com.mycompany.myapp.service;
 
 import com.mycompany.myapp.domain.Location;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -9,7 +8,6 @@ import java.util.Optional;
  * Service Interface for managing {@link Location}.
  */
 public interface LocationService {
-
     /**
      * Save a location.
      *
@@ -19,12 +17,27 @@ public interface LocationService {
     Location save(Location location);
 
     /**
+     * Updates a location.
+     *
+     * @param location the entity to update.
+     * @return the persisted entity.
+     */
+    Location update(Location location);
+
+    /**
+     * Partially updates a location.
+     *
+     * @param location the entity to update partially.
+     * @return the persisted entity.
+     */
+    Optional<Location> partialUpdate(Location location);
+
+    /**
      * Get all the locations.
      *
      * @return the list of entities.
      */
     List<Location> findAll();
-
 
     /**
      * Get the "id" location.
@@ -45,7 +58,6 @@ public interface LocationService {
      * Search for the location corresponding to the query.
      *
      * @param query the query of the search.
-     * 
      * @return the list of entities.
      */
     List<Location> search(String query);
