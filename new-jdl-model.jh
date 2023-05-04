@@ -1,114 +1,93 @@
-entity Region {
-	regionName String
+enum AutomatedActionType {
+	AUTO_DECLINE,
+    AUTO_OFFER
 }
 
-entity Country {
-	countryName String
+entity AutomatedAction {
+	type AutomatedActionType,
+    
+    positiveActionDefinition String,
+    negativeActionDefinition String,
+    
+    displayNameDe String,
+    displayNameEn String,
+    displayNameFr String,
+    displayNameIt String
 }
 
-// an ignored comment
-/** not an ignored comment */
-entity Location {
-	streetAddress String,
-	postalCode String,
-	city String,
-	stateProvince String
-}
-
-entity Department {
-	departmentName String required
-}
-
-/**
- * Task entity.
- * @author The JHipster team.
- */
-entity Task {
-	title String,
-	description String
-}
-
-/**
- * The Employee entity.
- */
-entity Employee {
-	/**
-	* The firstname attribute.
-	*/
-	firstName String,
-	lastName String,
-	email String,
-	phoneNumber String,
-	hireDate Instant,
-	salary Long,
-	commissionPct Long
-}
-
-entity Job {
-	jobTitle String,
-	minSalary Long,
-	maxSalary Long
-}
-
-entity JobHistory {
-	startDate Instant,
-	endDate Instant,
-	language Language
-}
-
-enum Language {
-    FRENCH, ENGLISH, SPANISH
-}
-
-relationship OneToOne {
-	Country{region} to Region
-}
-
-relationship OneToOne {
-	Location{country} to Country
-}
-
-relationship OneToOne {
-	Department{location} to Location
-}
-
-relationship ManyToMany {
-	Job{task(title)} to Task{job}
-}
-
-// defining multiple OneToMany relationships with comments
 relationship OneToMany {
-	Employee to Job{employee},
-	/**
-	* A relationship
-	*/
-	Department to
-	/**
-	* Another side of the same relationship
-	*/
-	Employee{department}
+	CriteriaSet{criterias} to Criteria,
+    Criteria{criteriaParameters} to CriteriaParameter,
 }
 
 relationship ManyToOne {
-	Employee{manager} to Employee
+    CriteriaSet{automatedAction} to AutomatedAction,
 }
 
-// defining multiple oneToOne relationships
-relationship OneToOne {
-	JobHistory{job} to Job,
-	JobHistory{department} to Department,
-	JobHistory{employee} to Employee
+relationship ManyToMany {
+    CriteriaSet{brokerCategories} to BrokerCategory{criteriaSets}
+    Criteria{actionParameters} to ActionParameter{criterias}
 }
 
-// Set pagination options
-paginate JobHistory, Employee with infinite-scroll
-paginate Job with pagination
+entity ActionParameter {
+	parameterName String,
+    parameterValue String 
+}
 
-// Use Data Transfert Objects (DTO)
-// dto * with mapstruct
+entity BrokerCategory {
+	displayName String
+}
 
-// Set service options to all except few
-service all with serviceImpl except Employee, Job
+entity CriteriaSet {
+	name String,
+    priority Integer,
+	insurerId Long,
+    lobId Long,
+}
 
-// Set an angular suffix
-// angularSuffix * with mySuffix
+entity Criteria {
+	priority Integer,
+	criteriaActionType CriteriaType
+    operator Operator,
+    criteriaDefinition CriteriaDefinition,
+}
+
+entity CriteriaParameter {
+	parameterName String,
+    parameterValue String 
+}
+
+//inside CriteriaDefinition some things are defined: 
+// 1. number of parameters
+// 2. name of the parameter
+// 3. type of the parameter
+// 4. Allowable operators
+enum CriteriaDefinition {
+	CREDITWORTHINESS,
+    SALARY_SUMM,
+    AMOUNT_OF_EMPLOYEES
+}
+
+enum CriteriaType {
+	POSITIVE,
+    NEGATIVE
+}
+
+enum DataType {
+	STRING,
+    LIST_OF_STRINGS
+    NUMBER,
+    DATE,
+    OTHERS_what_ever
+}
+
+enum Operator {
+  NOT_EQUAL_TO,
+  EQUAL_TO,
+  CONTAINS,
+  GREATER_THAN,
+  LESS_THAN,
+  GREATER_THAN_OR_EQUAL_TO,
+  LESS_THAN_OR_EQUAL_TO
+}
+
